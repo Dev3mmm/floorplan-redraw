@@ -242,6 +242,17 @@
   }
   .text-selected{ fill: var(--blue) !important; }
 
+  .wall-vertex-handle{
+    fill: var(--orange);
+    stroke: var(--card);
+    stroke-width: 2;
+    opacity: 0;
+    pointer-events: none;
+    cursor: move;
+  }
+  #floorplanSvg.editing .wall-vertex-handle{ opacity: .9; pointer-events: all; }
+  #floorplanSvg.editing .wall-path{ cursor: default; }
+
   #textEditor{
     position: absolute;
     display: none;
@@ -358,10 +369,10 @@
 
   <div class="plate">
     <div class="toolbar">
-      <button class="tbtn" id="editToggle" type="button" aria-pressed="false">✏️ Edit layout</button>
-      <button class="tbtn ghost" id="addLabelBtn" type="button" style="display:none;">+ Add label</button>
-      <button class="tbtn ghost" id="pdfBtn" type="button">⬇ Save as PDF</button>
-      <button class="tbtn ghost" id="resetBtn" type="button">Reset to default</button>
+      <button class="tbtn" id="editToggle" type="button" aria-pressed="false" title="Turn on dragging for lines, labels, furniture and walls">✏️ Edit layout</button>
+      <button class="tbtn ghost" id="addLabelBtn" type="button" style="display:none;" title="Create a new text label you can drag anywhere">+ Add label</button>
+      <button class="tbtn ghost" id="pdfBtn" type="button" title="Export the current plan (with your edits) as a PDF">⬇ Save as PDF</button>
+      <button class="tbtn ghost" id="resetBtn" type="button" title="Discard all your edits and reload the original layout">Reset to default</button>
       <span class="tb-hint" id="tbHint">Click any door to open/close it — always on.</span>
       <span class="tb-status"><span class="tb-dot" id="saveDot"></span><span id="saveLabel"></span></span>
     </div>
@@ -393,30 +404,19 @@
         </symbol>
       </defs>
 
-      <!-- ================= FUNCTION FILL TINTS ================= -->
-      <g stroke="none">
-        <path d="M95,220 L155,185 L600,185 L600,595 L95,595 Z" fill="var(--fill-bed)"/>
-        <rect x="85" y="595" width="420" height="275" fill="var(--fill-bed)"/>
-        <rect x="80" y="870" width="425" height="570" fill="var(--fill-bath)"/>
-        <rect x="70" y="1440" width="530" height="280" fill="var(--fill-bed)"/>
-        <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" fill="var(--fill-foyer)"/>
-        <rect x="505" y="595" width="90" height="845" fill="var(--fill-circ)"/>
-        <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z" fill="var(--fill-stair)"/>
-        <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z" fill="var(--fill-living)"/>
-      </g>
-
       <!-- ================= WALLS: single thick unified layer, no seams ================= -->
-      <!-- rect walls below double as their room's floor fill AND are wall-resizable (drag any edge) -->
+      <!-- rect walls double as their room's floor fill AND are wall-resizable (drag any edge). -->
+      <!-- wall-path shapes (irregular, multi-point) are resizable by dragging any corner dot. -->
       <g fill="none" stroke="var(--wall)" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M95,220 L155,185 L600,185 L600,595 L95,595 Z"/>
+        <path class="wall-path" data-id="wallpath-roomA" d="M95,220 L155,185 L600,185 L600,595 L95,595 Z" fill="var(--fill-bed)"/>
         <rect class="wall-rect" x="85" y="595" width="420" height="275" fill="var(--fill-bed)"/>
         <rect class="wall-rect" x="80" y="870" width="425" height="570" fill="var(--fill-bath)"/>
         <rect class="wall-rect" x="70" y="1440" width="530" height="280" fill="var(--fill-bed)"/>
         <!-- entry foyer: stepped L (shallow left + tall right) -->
-        <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z"/>
+        <path class="wall-path" data-id="wallpath-foyer" d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" fill="var(--fill-foyer)"/>
         <rect class="wall-rect" x="505" y="595" width="90" height="845" fill="var(--fill-circ)"/>
         <!-- irregular stairwell shaft: narrow sliver up top, widens lower -->
-        <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z"/>
+        <path class="wall-path" data-id="wallpath-stairs" d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z" fill="var(--fill-stair)"/>
         <rect class="wall-rect" x="690" y="215" width="190" height="245" fill="var(--fill-bath)"/>
         <rect class="wall-rect" x="605" y="965" width="275" height="265" fill="var(--fill-circ)"/>
         <rect class="wall-rect" x="880" y="610" width="70" height="620" fill="var(--fill-circ)"/>
@@ -424,7 +424,7 @@
         <rect class="wall-rect" x="955" y="610" width="290" height="320" fill="var(--fill-bath)"/>
         <rect class="wall-rect" x="955" y="930" width="290" height="300" fill="var(--fill-kitchen)"/>
         <!-- Salon: wide top band + narrower lower band (mirrors the foyer step) -->
-        <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z"/>
+        <path class="wall-path" data-id="wallpath-salon" d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z" fill="var(--fill-living)"/>
       </g>
 
       <!-- ================= source-marker color tags (small corner chips, one per traced room) ================= -->
@@ -673,12 +673,12 @@
         <circle cx="1192" cy="1102" r="6" fill="var(--ink)"/>
       </g>
 
-      <!-- SALON: small sofa/console kept exactly where the sketch drew it -->
+      <!-- SALON: L-shaped sofa in its original nook (4.6m tall, matching the sketch's dimension) -->
       <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
-        <!-- sofa in its original nook: backrest + two seat cushions -->
-        <path d="M850,1420 L920,1420 L920,1525 L850,1525 L850,1420" opacity=".85"/>
-        <line x1="850" y1="1420" x2="920" y2="1420" stroke-width="4" opacity=".85"/>
-        <line x1="850" y1="1470" x2="920" y2="1470" opacity=".5"/>
+        <path d="M850,1420 L900,1420 L900,1495 L950,1495 L950,1525 L850,1525 Z" opacity=".85"/>
+        <line x1="850" y1="1420" x2="900" y2="1420" stroke-width="4" opacity=".85"/>
+        <line x1="900" y1="1495" x2="950" y2="1495" stroke-width="4" opacity=".85"/>
+        <line x1="850" y1="1470" x2="900" y2="1470" opacity=".5"/>
       </g>
 
       <!-- entrance arrow: points right, into the corridor -->
@@ -909,6 +909,12 @@
     handlesLayer.setAttribute('id','handlesLayer');
     svg.appendChild(handlesLayer);
 
+    function addTip(el, text){
+      var t = document.createElementNS('http://www.w3.org/2000/svg','title');
+      t.textContent = text;
+      el.appendChild(t);
+    }
+
     var handleMap = {};
     function makeHandle(x,y,cls){
       var c = document.createElementNS('http://www.w3.org/2000/svg','circle');
@@ -920,6 +926,8 @@
     function registerLine(el){
       var h1 = makeHandle(el.x1.baseVal.value, el.y1.baseVal.value);
       var h2 = makeHandle(el.x2.baseVal.value, el.y2.baseVal.value);
+      addTip(h1, 'Drag to move this end of the line');
+      addTip(h2, 'Drag to move this end of the line');
       handleMap[el.dataset.id] = {h1:h1, h2:h2};
       h1.addEventListener('pointerdown', function(e){ startDrag(e, {type:'line-end', line:el, end:1, handle:h1}); });
       h2.addEventListener('pointerdown', function(e){ startDrag(e, {type:'line-end', line:el, end:2, handle:h2}); });
@@ -932,6 +940,7 @@
       hit.setAttribute('stroke-width','22');
       hit.classList.add('line-hit');
       handlesLayer.appendChild(hit);
+      addTip(hit, 'Drag to move this whole dimension line');
       hit.addEventListener('pointerdown', function(e){ startDrag(e, {type:'line-whole', line:el, h1:h1, h2:h2}); });
     }
     lines.forEach(registerLine);
@@ -944,6 +953,7 @@
       var bottom = makeHandle(x+w/2, y+h, 'wall-edge-handle horiz');
       var left = makeHandle(x, y+h/2, 'wall-edge-handle vert');
       var right = makeHandle(x+w, y+h/2, 'wall-edge-handle vert');
+      [top,bottom,left,right].forEach(function(h){ addTip(h, 'Drag to grow or shrink this wall'); });
       wallHandleMap[el.dataset.id] = {top:top,bottom:bottom,left:left,right:right};
       top.addEventListener('pointerdown', function(e){ startDrag(e, {type:'wall-edge', wall:el, edge:'top'}); });
       bottom.addEventListener('pointerdown', function(e){ startDrag(e, {type:'wall-edge', wall:el, edge:'bottom'}); });
@@ -961,6 +971,31 @@
     }
     wallRects.forEach(registerWallRect);
 
+    // ---------- wall-vertex handles (4 irregular shapes: Room A, foyer, stairwell, Salon) ----------
+    var wallPaths = Array.prototype.slice.call(svg.querySelectorAll('.wall-path'));
+    var wallPathPoints = {};
+    var wallPathHandles = {};
+    function parsePathD(d){
+      var pts = [], re = /[ML]\s*([-\d.]+)[, ]+([-\d.]+)/g, m;
+      while((m = re.exec(d))){ pts.push({x:parseFloat(m[1]), y:parseFloat(m[2])}); }
+      return pts;
+    }
+    function buildPathD(pts){
+      return pts.map(function(p,i){ return (i===0?'M':'L')+p.x+','+p.y; }).join(' ') + ' Z';
+    }
+    wallPaths.forEach(function(el){
+      var pts = parsePathD(el.getAttribute('d'));
+      var s = state.walls[el.dataset.id];
+      if(s && s.pts){ pts = s.pts; el.setAttribute('d', buildPathD(pts)); }
+      wallPathPoints[el.dataset.id] = pts;
+      wallPathHandles[el.dataset.id] = pts.map(function(p, idx){
+        var h = makeHandle(p.x, p.y, 'wall-vertex-handle');
+        addTip(h, 'Drag to reshape this wall (moves just this corner)');
+        h.addEventListener('pointerdown', function(e){ startDrag(e, {type:'wall-vertex', path:el, index:idx}); });
+        return h;
+      });
+    });
+
     // ---------- text: drag, font-size wheel, double-click to edit, select+Delete to remove ----------
     var selectedText = null;
     function selectText(el){
@@ -969,6 +1004,7 @@
       if(el) el.classList.add('text-selected');
     }
     function registerText(el){
+      if(!el.querySelector('title')) addTip(el, 'Drag to move · scroll to resize font · double-click to rename · click then Delete to remove');
       el.addEventListener('pointerdown', function(e){ selectText(el); startDrag(e, {type:'text', text:el}); });
       el.addEventListener('dblclick', function(e){ if(editing){ e.preventDefault(); e.stopPropagation(); openTextEditor(el); } });
       el.addEventListener('wheel', function(e){
@@ -983,6 +1019,7 @@
     texts.forEach(registerText);
 
     groups.forEach(function(el){
+      addTip(el, 'Drag to move this piece of furniture');
       el.addEventListener('pointerdown', function(e){ startDrag(e, {type:'group', group:el}); });
     });
 
@@ -1084,6 +1121,9 @@
       } else if(info.type === 'wall-edge'){
         info.origX = info.wall.x.baseVal.value; info.origY = info.wall.y.baseVal.value;
         info.origW = info.wall.width.baseVal.value; info.origH = info.wall.height.baseVal.value;
+      } else if(info.type === 'wall-vertex'){
+        var pt = wallPathPoints[info.path.dataset.id][info.index];
+        info.origX = pt.x; info.origY = pt.y;
       }
       active = info;
     }
@@ -1116,6 +1156,13 @@
         else if(active.edge === 'bottom'){ nh = Math.max(minSize, active.origH + dy); w.height.baseVal.value = nh; }
         else if(active.edge === 'top'){ nh = Math.max(minSize, active.origH - dy); w.y.baseVal.value = active.origY + active.origH - nh; w.height.baseVal.value = nh; }
         syncWallHandles(w);
+      } else if(active.type === 'wall-vertex'){
+        var pid = active.path.dataset.id;
+        var nvx = active.origX + dx, nvy = active.origY + dy;
+        wallPathPoints[pid][active.index] = {x:nvx, y:nvy};
+        active.path.setAttribute('d', buildPathD(wallPathPoints[pid]));
+        var h = wallPathHandles[pid][active.index];
+        h.setAttribute('cx', nvx); h.setAttribute('cy', nvy);
       }
     });
     document.addEventListener('pointerup', function(){
@@ -1154,6 +1201,9 @@
       wallRects.forEach(function(el){
         s.walls[el.dataset.id] = {x:el.x.baseVal.value,y:el.y.baseVal.value,width:el.width.baseVal.value,height:el.height.baseVal.value};
       });
+      wallPaths.forEach(function(el){
+        s.walls[el.dataset.id] = {pts: wallPathPoints[el.dataset.id]};
+      });
       state = s;
       saveState(s);
     }
@@ -1188,11 +1238,14 @@
         hit.setAttribute('stroke', 'transparent');
         hit.setAttribute('stroke-width', '46');
         hit.style.pointerEvents = 'stroke';
+        addTip(hit, el.classList.contains('closed') ? 'Click to open this door' : 'Click to close this door');
         el.insertBefore(hit, el.firstChild);
       }
       el.addEventListener('click', function(e){
         if(active) return; // ignore click that ends a drag
         el.classList.toggle('closed');
+        var t = el.querySelector('.door-hit title');
+        if(t) t.textContent = el.classList.contains('closed') ? 'Click to open this door' : 'Click to close this door';
         persistAll();
       });
     });
