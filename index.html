@@ -1,0 +1,485 @@
+<title>Apartment Floor Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Architects+Daughter&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --paper:#eeece6;
+    --paper-2:#e3e0d8;
+    --ink:#2a2723;
+    --ink-soft:#5c574e;
+    --line:#3a352e;
+    --green:#1f8a4c;
+    --pink:#d6337b;
+    --blue:#2454c7;
+    --gold:#c99a1e;
+    --red:#c62d2d;
+    --gray:#8d897f;
+    --orange:#d97a1f;
+    --card:#f7f5f0;
+    --row-alt:#eeebe3;
+    --shadow: 0 12px 40px -12px rgba(42,39,35,.35);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#1c1a17;
+      --paper-2:#242119;
+      --ink:#eee8dd;
+      --ink-soft:#b6ada0;
+      --line:#e8e0d2;
+      --green:#4cbf7d;
+      --pink:#ec6ba0;
+      --blue:#6f97e8;
+      --gold:#e4bb52;
+      --red:#e06a5a;
+      --gray:#a39d90;
+      --orange:#e79a4c;
+      --card:#232019;
+      --row-alt:#2a271f;
+      --shadow: 0 12px 40px -12px rgba(0,0,0,.6);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#1c1a17;
+    --paper-2:#242119;
+    --ink:#eee8dd;
+    --ink-soft:#b6ada0;
+    --line:#e8e0d2;
+    --green:#4cbf7d;
+    --pink:#ec6ba0;
+    --blue:#6f97e8;
+    --gold:#e4bb52;
+    --red:#e06a5a;
+    --gray:#a39d90;
+    --orange:#e79a4c;
+    --card:#232019;
+    --row-alt:#2a271f;
+    --shadow: 0 12px 40px -12px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:
+      radial-gradient(120% 140% at 15% -10%, var(--paper-2), transparent 60%),
+      var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    padding-inline: 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .wrap{
+    width:100%;
+    max-width: 820px;
+    padding-block: 28px 40px;
+  }
+
+  header{ margin-bottom: 18px; }
+  .eyebrow{
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 6px;
+  }
+  h1{
+    font-family: 'Architects Daughter', cursive;
+    font-weight: 400;
+    font-size: clamp(26px, 5vw, 34px);
+    margin: 0 0 6px;
+    text-wrap: balance;
+    letter-spacing: .01em;
+  }
+  .sub{
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    line-height: 1.6;
+    max-width: 68ch;
+    margin: 0;
+  }
+
+  .plate{
+    background: var(--card);
+    border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-top: 20px;
+  }
+
+  .plate svg{
+    width: 100%;
+    height: auto;
+    display:block;
+    font-family: 'Caveat', cursive;
+  }
+
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 10px 18px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed color-mix(in srgb, var(--ink) 25%, transparent);
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap: 7px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  .swatch{
+    width: 16px;
+    height: 10px;
+    border-radius: 2px;
+    flex: none;
+  }
+
+  .note{
+    margin-top: 16px;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+  .note b{ color: var(--ink); font-weight: 600; }
+
+  h2{
+    font-family: 'Architects Daughter', cursive;
+    font-weight: 400;
+    font-size: 22px;
+    margin: 34px 0 12px;
+  }
+
+  .tablewrap{
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  }
+  table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 640px;
+    background: var(--card);
+  }
+  thead th{
+    text-align: left;
+    font-size: 10.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    padding: 10px 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+  tbody td{
+    padding: 9px 12px;
+    vertical-align: top;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+    line-height: 1.5;
+  }
+  tbody tr:nth-child(even){ background: var(--row-alt); }
+  .num{
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    width: 26px;
+  }
+  .colorcell{ display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .dot{ width:12px; height:12px; border-radius: 3px; flex:none; }
+  .shape-flag{
+    display:inline-block;
+    font-size: 9.5px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 10%, transparent);
+    color: var(--ink-soft);
+    margin-top: 3px;
+  }
+
+  footer{
+    margin-top: 24px;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    text-align:center;
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Traced from hand sketch · shapes + dimensions verified against zoomed source photo</p>
+    <h1>Apartment Floor Plan</h1>
+    <p class="sub">Digital redraw of the pencil-and-marker sketch. Every room outline, corridor, the stepped entry foyer, the L-shaped Salón, and the irregular stairwell shaft are traced to match the original shapes — not simplified into plain boxes — with every dimension label carried over exactly as marked.</p>
+  </header>
+
+  <div class="plate">
+    <svg viewBox="0 0 1500 2010" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="hatch" width="14" height="14" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0" x2="0" y2="14" stroke="var(--gold)" stroke-width="3" opacity=".55"/>
+        </pattern>
+        <marker id="arrowL" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto">
+          <path d="M6,0 L0,3 L6,6 Z" fill="var(--ink)"/>
+        </marker>
+        <marker id="arrowR" markerWidth="10" markerHeight="10" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="var(--ink)"/>
+        </marker>
+        <marker id="bigArrow" markerWidth="14" markerHeight="14" refX="9" refY="4" orient="auto">
+          <path d="M0,0 L10,4 L0,8 Z" fill="var(--red)"/>
+        </marker>
+      </defs>
+
+      <!-- ================= WALLS (pencil layer) ================= -->
+      <g fill="none" stroke="var(--line)" stroke-width="2.5" stroke-linejoin="round">
+        <path d="M95,220 L155,185 L600,185 L600,575 L95,575 Z"/>
+        <rect x="85" y="595" width="420" height="275"/>
+        <rect x="80" y="880" width="425" height="560"/>
+        <rect x="70" y="1450" width="530" height="270"/>
+        <!-- entry foyer: stepped L (shallow left + tall right) -->
+        <path d="M70,1855 L605,1855 L605,1655 L895,1655 L895,1985 L70,1985 Z"/>
+        <rect x="505" y="595" width="90" height="855"/>
+        <!-- irregular stairwell shaft: narrow sliver up top, widens lower -->
+        <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z"/>
+        <rect x="690" y="215" width="190" height="245"/>
+        <rect x="605" y="965" width="275" height="285"/>
+        <rect x="880" y="610" width="70" height="640"/>
+        <rect x="880" y="230" width="365" height="380"/>
+        <rect x="955" y="620" width="290" height="310"/>
+        <rect x="955" y="940" width="290" height="290"/>
+        <!-- Salon: wide top band + narrower lower band (mirrors the foyer step) -->
+        <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z"/>
+      </g>
+
+      <!-- ================= COLOR HIGHLIGHT LAYER ================= -->
+      <g fill="none" stroke-width="7" stroke-linejoin="round" opacity=".92">
+        <path d="M95,220 L155,185 L600,185 L600,575 L95,575 Z" stroke="var(--green)"/>
+        <rect x="85" y="595" width="420" height="275" stroke="var(--green)"/>
+        <rect x="80" y="880" width="425" height="560" stroke="var(--pink)"/>
+        <rect x="70" y="1450" width="530" height="270" stroke="var(--green)"/>
+        <path d="M70,1855 L605,1855 L605,1655 L895,1655 L895,1985 L70,1985 Z" stroke="var(--orange)"/>
+        <rect x="505" y="595" width="90" height="855" stroke="var(--gray)"/>
+        <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z" stroke="var(--gold)"/>
+        <rect x="690" y="215" width="190" height="245" stroke="var(--blue)"/>
+        <rect x="605" y="965" width="275" height="285" stroke="var(--blue)"/>
+        <rect x="880" y="610" width="70" height="640" stroke="var(--gray)"/>
+        <rect x="880" y="230" width="365" height="380" stroke="var(--green)"/>
+        <rect x="955" y="620" width="290" height="310" stroke="var(--pink)"/>
+        <rect x="955" y="940" width="290" height="290" stroke="var(--red)"/>
+        <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z" stroke="var(--red)"/>
+        <!-- shared foyer/salon step border, drawn in red to match source -->
+        <line x1="605" y1="1655" x2="895" y2="1655" stroke="var(--red)"/>
+      </g>
+
+      <!-- ================= STAIR HATCHING ================= -->
+      <g opacity=".9">
+        <rect x="609" y="219" width="76" height="237" fill="url(#hatch)"/>
+        <rect x="750" y="470" width="126" height="480" fill="url(#hatch)"/>
+      </g>
+
+      <!-- ================= ROOM A ICONS (sloped soffit + built-in wardrobe + door) ================= -->
+      <g stroke="var(--ink)" stroke-width="2" fill="none">
+        <path d="M120,220 L175,192 L175,244" opacity=".7"/>
+        <rect x="175" y="192" width="216" height="52" opacity=".8"/>
+        <line x1="247" y1="192" x2="247" y2="244"/>
+        <line x1="319" y1="192" x2="319" y2="244"/>
+        <path d="M560,575 A80,80 0 0 0 480,655" opacity=".6"/>
+      </g>
+
+      <!-- ROOM C: two dividing rails + built-in wardrobe at bottom -->
+      <g stroke="var(--ink)" stroke-width="2" fill="none">
+        <line x1="95" y1="965" x2="495" y2="965" opacity=".7"/>
+        <line x1="95" y1="1195" x2="495" y2="1195" opacity=".7"/>
+        <circle cx="230" cy="1080" r="4" fill="var(--ink)"/>
+        <circle cx="330" cy="1080" r="4" fill="var(--ink)"/>
+        <rect x="130" y="1390" width="95" height="34"/>
+        <line x1="177" y1="1390" x2="177" y2="1424"/>
+        <rect x="300" y="1390" width="95" height="34"/>
+        <line x1="347" y1="1390" x2="347" y2="1424"/>
+      </g>
+
+      <!-- ROOM D: wardrobe + table w/ leg brace -->
+      <g stroke="var(--ink)" stroke-width="2" fill="none">
+        <rect x="95" y="1468" width="340" height="96"/>
+        <line x1="95" y1="1500" x2="435" y2="1500"/>
+        <rect x="95" y="1615" width="62" height="42"/>
+        <line x1="95" y1="1657" x2="130" y2="1690"/>
+      </g>
+
+      <!-- LIFT car -->
+      <g stroke="var(--ink)" stroke-width="2" fill="none" opacity=".75">
+        <rect x="665" y="1030" width="150" height="170"/>
+        <line x1="665" y1="1030" x2="815" y2="1200"/>
+        <line x1="815" y1="1030" x2="665" y2="1200"/>
+      </g>
+
+      <!-- BLUE landing room: floor fixture + door swing -->
+      <g stroke="var(--ink)" stroke-width="2" fill="none">
+        <rect x="830" y="420" width="26" height="18" opacity=".7"/>
+        <path d="M855,460 A55,55 0 0 0 810,405" opacity=".6"/>
+      </g>
+
+      <!-- ROOM F bathroom fixtures: 2 wall cabinets w/ knobs, basin+faucet, oval mirror over a stand -->
+      <g stroke="var(--ink)" stroke-width="2" fill="none">
+        <rect x="985" y="630" width="80" height="50"/>
+        <circle cx="1025" cy="655" r="4" fill="var(--ink)"/>
+        <rect x="1090" y="630" width="80" height="50"/>
+        <circle cx="1130" cy="655" r="4" fill="var(--ink)"/>
+        <rect x="985" y="790" width="80" height="90"/>
+        <path d="M985,800 L1065,845" opacity=".6"/>
+        <circle cx="1025" cy="825" r="5" fill="var(--ink)"/>
+        <rect x="1140" y="855" width="55" height="26"/>
+        <ellipse cx="1167" cy="800" rx="32" ry="42"/>
+      </g>
+
+      <!-- KITCHEN: FRIGO/HORNO MICRO labels over counter, stove w/ 3 burners, small fixture at right wall -->
+      <g stroke="var(--ink)" stroke-width="2" fill="none">
+        <rect x="970" y="950" width="80" height="34"/>
+        <rect x="1060" y="950" width="90" height="34"/>
+        <rect x="990" y="1000" width="70" height="150"/>
+        <circle cx="1025" cy="1035" r="14"/>
+        <circle cx="1025" cy="1075" r="14"/>
+        <circle cx="1025" cy="1115" r="14"/>
+        <line x1="1150" y1="1000" x2="1235" y2="1000"/>
+        <rect x="1190" y="1010" width="35" height="35"/>
+        <circle cx="1207" cy="1027" r="6" fill="var(--ink)"/>
+      </g>
+
+      <!-- SALON sofa/table alcove + door arcs -->
+      <g stroke="var(--ink)" stroke-width="2" fill="none">
+        <path d="M850,1470 L850,1420 L920,1420 L920,1470" opacity=".8"/>
+        <rect x="850" y="1470" width="70" height="55" opacity=".8"/>
+        <path d="M895,1985 A90,90 0 0 0 805,1895" opacity=".6"/>
+        <path d="M1245,1780 A80,80 0 0 1 1165,1860" opacity=".6"/>
+      </g>
+
+      <!-- small structural column marks noted in the sketch -->
+      <g fill="var(--ink)" opacity=".55">
+        <rect x="326" y="713" width="16" height="12"/>
+        <rect x="596" y="713" width="14" height="12"/>
+        <rect x="826" y="900" width="14" height="12"/>
+        <rect x="636" y="1225" width="14" height="12"/>
+      </g>
+
+      <!-- entrance arrow: points right, into the corridor -->
+      <line x1="805" y1="905" x2="858" y2="905" stroke="var(--red)" stroke-width="5" marker-end="url(#bigArrow)"/>
+
+      <!-- ================= LABELS ================= -->
+      <g fill="var(--ink)" font-size="30">
+        <text x="720" y="1095" text-anchor="middle" font-size="26">lift</text>
+        <text x="742" y="720" text-anchor="middle" font-size="17" transform="rotate(-90 742 720)" opacity=".8">Hueco escalera / Ascensor</text>
+        <text x="1000" y="945" text-anchor="middle" font-size="18" font-family="'IBM Plex Mono',monospace">FRIGO</text>
+        <text x="1105" y="945" text-anchor="middle" font-size="14" font-family="'IBM Plex Mono',monospace">HORNO</text>
+        <text x="1105" y="960" text-anchor="middle" font-size="14" font-family="'IBM Plex Mono',monospace">MICRO</text>
+        <text x="1000" y="1470" text-anchor="middle" font-size="28" transform="rotate(-90 1000 1470)">Salón</text>
+      </g>
+
+      <!-- ================= DIMENSIONS ================= -->
+      <g fill="var(--ink)" font-size="26" text-anchor="middle">
+        <!-- Room A -->
+        <line x1="140" y1="560" x2="555" y2="560" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="347" y="548">3.4m</text>
+        <text x="615" y="380" transform="rotate(-90 615 380)">3m</text>
+
+        <!-- Room B -->
+        <text x="290" y="618">2.7m</text>
+        <line x1="130" y1="625" x2="455" y2="625" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="497" y="735" transform="rotate(-90 497 735)">3m</text>
+
+        <!-- Room C -->
+        <text x="280" y="1385">2.7m</text>
+        <line x1="120" y1="1395" x2="430" y2="1395" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="492" y="1165" transform="rotate(-90 492 1165)">4.5m</text>
+
+        <!-- Room D -->
+        <text x="330" y="1705">3.1m</text>
+        <line x1="110" y1="1715" x2="555" y2="1715" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="570" y="1560" transform="rotate(-90 570 1560)">3.2m</text>
+
+        <!-- entry foyer -->
+        <text x="45" y="1930" transform="rotate(-90 45 1930)">1.5m</text>
+        <text x="945" y="1825" transform="rotate(-90 945 1825)">3.2m</text>
+        <text x="750" y="2005">6.1m</text>
+        <line x1="80" y1="1995" x2="890" y2="1995" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+
+        <!-- left gray corridor -->
+        <text x="550" y="710">1m</text>
+        <text x="590" y="900" transform="rotate(-90 590 900)">6.7m</text>
+
+        <!-- blue small room -->
+        <text x="785" y="260">2m</text>
+        <text x="720" y="345" transform="rotate(-90 720 345)">2m</text>
+
+        <!-- right gray corridor -->
+        <text x="915" y="925" transform="rotate(-90 915 925)">1.2m</text>
+
+        <!-- Room E -->
+        <text x="1060" y="275">3.2m</text>
+        <line x1="905" y1="285" x2="1220" y2="285" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1215" y="350" transform="rotate(-90 1215 350)">3.4m</text>
+
+        <!-- Room F -->
+        <text x="1075" y="720">2.2m</text>
+        <line x1="965" y1="730" x2="1235" y2="730" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1235" y="735" transform="rotate(-90 1235 735)">2m</text>
+
+        <!-- Kitchen -->
+        <text x="1195" y="965">2.5m</text>
+        <text x="1155" y="1095" transform="rotate(-90 1155 1095)">3m</text>
+
+        <!-- Salon -->
+        <text x="925" y="1215">6.3m</text>
+        <line x1="615" y1="1225" x2="1235" y2="1225" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1275" y="1610" transform="rotate(-90 1275 1610)">6.6m</text>
+        <text x="640" y="1440" transform="rotate(-90 640 1440)">4.2m</text>
+        <text x="750" y="1645">2.5m</text>
+        <text x="905" y="1470" transform="rotate(-90 905 1470)">4.6m</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="swatch" style="background:var(--green)"></span>Green</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--pink)"></span>Pink</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--red)"></span>Red</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--gold)"></span>Yellow (hatched)</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--blue)"></span>Blue</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--gray)"></span>Gray</div>
+    <div class="legend-item"><span class="swatch" style="background:var(--orange)"></span>Orange</div>
+  </div>
+
+  <p class="note">
+    <b>Reading note —</b> the marker colors on the original sketch are not a room-type code (pink marks both a bedroom and the bathroom); they're only used to make adjacent outlines easy to tell apart, so the table below lists color exactly as drawn, separately from what the room actually is. Dimensions are copied as written (apostrophe used as decimal point, e.g. "3'4m" → 3.4m). Three shapes are genuinely irregular, not boxes: Room A's soffit-cut corner, the stepped entry foyer, the offset stairwell shaft, and the L-shaped Salón with its sofa alcove.
+  </p>
+
+  <h2>Room reference</h2>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Color</th><th>Shape</th><th>Dimensions</th><th>Contents / function</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Rectangle, top-left corner cut by a diagonal soffit line<span class="shape-flag">irregular</span></td><td>3.4 × 3.0 m</td><td>3-leaf built-in wardrobe along top wall, door swing bottom-right → <b>Bedroom</b></td></tr>
+        <tr><td class="num">2</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Plain rectangle</td><td>2.7 × 3.0 m</td><td>Empty → <b>Bedroom</b></td></tr>
+        <tr><td class="num">3</td><td class="colorcell"><span class="dot" style="background:var(--pink)"></span>Pink</td><td>Plain rectangle</td><td>2.7 × 4.5 m</td><td>2 dividing rails, 2 marks mid-room, wardrobe at bottom → <b>Bedroom</b></td></tr>
+        <tr><td class="num">4</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Plain rectangle</td><td>3.1 × 3.2 m</td><td>Wardrobe + table/desk with leg brace → <b>Bedroom</b></td></tr>
+        <tr><td class="num">5</td><td class="colorcell"><span class="dot" style="background:var(--orange)"></span>Orange (+red on upper edges)</td><td>Stepped L-shape<span class="shape-flag">irregular</span></td><td>1.5 m tall (left, under Room D) → steps up to 2.5 × 3.2 m (right); 6.1 m along the bottom</td><td>Empty passage linking Room D's side to the Salón → <b>Entry foyer</b></td></tr>
+        <tr><td class="num">6</td><td class="colorcell"><span class="dot" style="background:var(--gray)"></span>Gray</td><td>Plain rectangle</td><td>1.0 × 6.7 m</td><td>Empty → <b>Corridor</b> (bedrooms ↔ stairwell)</td></tr>
+        <tr><td class="num">7</td><td class="colorcell"><span class="dot" style="background:var(--gold)"></span>Yellow (hatched)</td><td>Offset shaft — narrow sliver on top, widens below<span class="shape-flag">irregular</span></td><td>No dimension written on the sketch</td><td>2 hatched stair flights; faint label "Hueco escalera / Ascensor" → <b>Staircase</b></td></tr>
+        <tr><td class="num">8</td><td class="colorcell"><span class="dot" style="background:var(--blue)"></span>Blue</td><td>Square</td><td>2.0 × 2.0 m</td><td>Door swing + small floor fixture → <b>Room off the landing</b></td></tr>
+        <tr><td class="num">9</td><td class="colorcell"><span class="dot" style="background:var(--blue)"></span>Blue</td><td>Plain rectangle</td><td>No dimension written</td><td>Labeled "lift" → <b>Elevator</b></td></tr>
+        <tr><td class="num">10</td><td class="colorcell"><span class="dot" style="background:var(--gray)"></span>Gray</td><td>Plain rectangle</td><td>1.2 m wide (height not labeled)</td><td>Red arrow points into it (circulation) → <b>Corridor</b> (stair/lift ↔ kitchen/bath)</td></tr>
+        <tr><td class="num">11</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Plain rectangle</td><td>3.2 × 3.4 m</td><td>Empty → <b>Bedroom</b></td></tr>
+        <tr><td class="num">12</td><td class="colorcell"><span class="dot" style="background:var(--pink)"></span>Pink</td><td>Plain rectangle</td><td>2.2 × 2.0 m</td><td>2 cabinets w/ knobs, basin + faucet, oval mirror over a stand → <b>Bathroom</b></td></tr>
+        <tr><td class="num">13</td><td class="colorcell"><span class="dot" style="background:var(--red)"></span>Red</td><td>Open zone inside the Salón's footprint, marked by a counter line, not a full wall</td><td>2.5 m wide × 3.0 m</td><td>FRIGO + HORNO/MICRO labels, 3-burner stove, small fixture at right wall → <b>Kitchen</b></td></tr>
+        <tr><td class="num">14</td><td class="colorcell"><span class="dot" style="background:var(--red)"></span>Red</td><td>L-shape with a sofa alcove<span class="shape-flag">irregular</span></td><td>Top 6.3 m, right 6.6 m, step 2.5×4.2 m, sofa alcove 4.6 m tall</td><td>"Salón" label, sofa/table icon, 2 door swings → <b>Living room</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>Redrawn from the original pencil sketch · shapes and labels verified against zoomed source crops · not an engineering-grade survey</footer>
+</div>
