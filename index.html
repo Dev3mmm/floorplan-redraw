@@ -496,8 +496,8 @@
         <rect x="1108" y="1012" width="55" height="36" rx="4"/>
         <circle cx="1136" cy="1000" r="3" fill="var(--ink)"/>
         <line x1="1150" y1="1075" x2="1235" y2="1075"/>
-        <rect x="1190" y="1085" width="35" height="35"/>
-        <circle cx="1207" cy="1102" r="6" fill="var(--ink)"/>
+        <rect x="1175" y="1085" width="35" height="35"/>
+        <circle cx="1192" cy="1102" r="6" fill="var(--ink)"/>
       </g>
 
       <!-- SALON: small sofa/console kept exactly where the sketch drew it, plus door arcs -->
@@ -539,66 +539,94 @@
         <text x="1105" y="958" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace">MICRO</text>
       </g>
 
-      <!-- ================= DIMENSIONS ================= -->
-      <g fill="var(--ink-soft)" font-size="18" font-family="'Inter',sans-serif" text-anchor="middle">
-        <!-- Room A -->
-        <line x1="140" y1="560" x2="555" y2="560" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="347" y="548">3.4m</text>
-        <text x="615" y="380" transform="rotate(-90 615 380)">3m</text>
+      <!-- ================= DIMENSIONS: every label inset inside the one room it measures, ================= -->
+      <!-- ================= with its own arrow line, and a light halo so it reads over any fill  ================= -->
+      <g fill="var(--ink)" font-size="19" font-weight="600" font-family="'Inter',sans-serif" text-anchor="middle"
+         stroke="var(--card)" stroke-width="4" paint-order="stroke" stroke-linejoin="round">
 
-        <!-- Room B -->
-        <text x="290" y="618">2.7m</text>
-        <line x1="130" y1="625" x2="455" y2="625" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="497" y="735" transform="rotate(-90 497 735)">3m</text>
+        <!-- Room A: 3.4 x 3.0 -->
+        <line x1="130" y1="565" x2="570" y2="565" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="350" y="556">3.4m</text>
+        <line x1="578" y1="205" x2="578" y2="580" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="578" y="398" transform="rotate(-90 578 398)">3m</text>
 
-        <!-- Room C -->
-        <text x="280" y="1385">2.7m</text>
-        <line x1="120" y1="1395" x2="430" y2="1395" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="492" y="1165" transform="rotate(-90 492 1165)">4.5m</text>
+        <!-- Room B: 2.7 x 3.0 -->
+        <line x1="130" y1="620" x2="460" y2="620" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="295" y="611">2.7m</text>
+        <line x1="478" y1="618" x2="478" y2="850" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="478" y="738" transform="rotate(-90 478 738)">3m</text>
 
-        <!-- Room D -->
-        <text x="330" y="1705">3.1m</text>
-        <line x1="110" y1="1715" x2="555" y2="1715" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="570" y="1560" transform="rotate(-90 570 1560)">3.2m</text>
+        <!-- Room C: 2.7 x 4.5 -->
+        <line x1="120" y1="905" x2="430" y2="905" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="275" y="896">2.7m</text>
+        <line x1="473" y1="895" x2="473" y2="1420" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="473" y="1162" transform="rotate(-90 473 1162)">4.5m</text>
 
-        <!-- entry foyer -->
-        <text x="45" y="1930" transform="rotate(-90 45 1930)">1.5m</text>
-        <text x="945" y="1825" transform="rotate(-90 945 1825)">3.2m</text>
-        <text x="750" y="2005">6.1m</text>
-        <line x1="80" y1="1995" x2="890" y2="1995" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <!-- Room D: 3.1 x 3.2 -->
+        <line x1="110" y1="1696" x2="555" y2="1696" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="330" y="1687">3.1m</text>
+        <line x1="562" y1="1460" x2="562" y2="1700" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="562" y="1584" transform="rotate(-90 562 1584)">3.2m</text>
 
-        <!-- left gray corridor -->
-        <text x="550" y="710">1m</text>
-        <text x="590" y="900" transform="rotate(-90 590 900)">6.7m</text>
+        <!-- Foyer: 1.5 tall (left, under D) -->
+        <line x1="112" y1="1740" x2="112" y2="1975" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="112" y="1862" transform="rotate(-90 112 1862)">1.5m</text>
+        <!-- Foyer: 3.2 tall (right, tall step) -->
+        <line x1="870" y1="1672" x2="870" y2="1975" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="870" y="1828" transform="rotate(-90 870 1828)">3.2m</text>
+        <!-- Foyer: 6.1 bottom width -->
+        <line x1="90" y1="1966" x2="880" y2="1966" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="480" y="1957">6.1m</text>
 
-        <!-- blue small room -->
-        <text x="785" y="260">2m</text>
-        <text x="720" y="345" transform="rotate(-90 720 345)">2m</text>
+        <!-- Corridor (left): 1.0 x 6.7 -->
+        <line x1="520" y1="655" x2="580" y2="655" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="550" y="646">1m</text>
+        <line x1="550" y1="690" x2="550" y2="1425" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="550" y="1058" transform="rotate(-90 550 1058)">6.7m</text>
 
-        <!-- right gray corridor -->
-        <text x="915" y="925" transform="rotate(-90 915 925)">1.2m</text>
+        <!-- Storage (blue, off landing): 2.0 x 2.0 -->
+        <line x1="708" y1="240" x2="862" y2="240" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="785" y="231">2m</text>
+        <line x1="708" y1="252" x2="708" y2="452" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="708" y="352" transform="rotate(-90 708 352)">2m</text>
 
-        <!-- Room E -->
-        <text x="1060" y="275">3.2m</text>
-        <line x1="905" y1="285" x2="1220" y2="285" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1215" y="350" transform="rotate(-90 1215 350)">3.4m</text>
+        <!-- Corridor (right): 1.2 wide -->
+        <line x1="895" y1="700" x2="935" y2="700" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="915" y="691">1.2m</text>
 
-        <!-- Room F -->
-        <text x="1075" y="720">2.2m</text>
-        <line x1="965" y1="730" x2="1235" y2="730" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1235" y="735" transform="rotate(-90 1235 735)">2m</text>
+        <!-- Room E: 3.2 x 3.4 -->
+        <line x1="905" y1="255" x2="1220" y2="255" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1062" y="246">3.2m</text>
+        <line x1="1198" y1="250" x2="1198" y2="595" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1198" y="422" transform="rotate(-90 1198 422)">3.4m</text>
 
-        <!-- Kitchen -->
-        <text x="1195" y="965">2.5m</text>
-        <text x="965" y="1080" transform="rotate(-90 965 1080)">3m</text>
+        <!-- Room F: 2.2 x 2.0 -->
+        <line x1="975" y1="895" x2="1220" y2="895" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1097" y="886">2.2m</text>
+        <line x1="1213" y1="635" x2="1213" y2="895" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1213" y="765" transform="rotate(-90 1213 765)">2m</text>
 
-        <!-- Salon -->
-        <text x="925" y="1215">6.3m</text>
-        <line x1="615" y1="1225" x2="1235" y2="1225" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1275" y="1610" transform="rotate(-90 1275 1610)">6.6m</text>
-        <text x="640" y="1440" transform="rotate(-90 640 1440)">4.2m</text>
-        <text x="750" y="1645">2.5m</text>
-        <text x="945" y="1470" transform="rotate(-90 945 1470)">4.6m</text>
+        <!-- Kitchen: 2.5 wide x 3.0 -->
+        <line x1="1000" y1="1002" x2="1150" y2="1002" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1075" y="993">2.5m</text>
+        <line x1="1230" y1="1000" x2="1230" y2="1200" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1230" y="1100" transform="rotate(-90 1230 1100)">3m</text>
+
+        <!-- Salon: 6.3 top width -->
+        <line x1="625" y1="1268" x2="1222" y2="1268" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="925" y="1259">6.3m</text>
+        <!-- Salon: 6.6 right height -->
+        <line x1="1222" y1="1275" x2="1222" y2="1960" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="1222" y="1618" transform="rotate(-90 1222 1618)">6.6m</text>
+        <!-- Salon: 4.2 notch height -->
+        <line x1="625" y1="1252" x2="625" y2="1650" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="625" y="1451" transform="rotate(-90 625 1451)">4.2m</text>
+        <!-- Salon: 2.5 notch width (just below the step line) -->
+        <line x1="612" y1="1672" x2="748" y2="1672" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="680" y="1663">2.5m</text>
+        <!-- Salon: 4.6 sofa alcove height -->
+        <line x1="940" y1="1422" x2="940" y2="1523" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text x="940" y="1472" transform="rotate(-90 940 1472)">4.6m</text>
       </g>
     </svg>
   </div>
