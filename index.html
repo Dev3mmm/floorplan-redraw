@@ -198,6 +198,8 @@
 
   /* ---- door interactions: always clickable ---- */
   .door{ cursor: pointer; }
+  #floorplanSvg.editing .door.door-selected .door-erase,
+  #floorplanSvg.editing .door.door-selected .door-closer{ stroke: var(--blue) !important; }
   .door .door-closer{ display: none; }
   .door.closed .door-closer{ display: inline; }
   .door.closed .door-swing{ display: none; }
@@ -262,6 +264,11 @@
   #floorplanSvg.editing .seg-hit{ pointer-events: stroke; }
   #floorplanSvg:not(.editing) .seg-hit{ pointer-events: none; }
   #floorplanSvg.editing #wallDrawHint{ cursor: crosshair; }
+
+  .win-stretch-handle{ fill: var(--gold); stroke: var(--card); stroke-width: 1.5; opacity: 0; pointer-events: none; cursor: ew-resize; }
+  .win-rotate-handle{ fill: var(--green); stroke: var(--card); stroke-width: 1.5; opacity: 0; pointer-events: none; cursor: grab; }
+  #floorplanSvg.editing .win-stretch-handle,
+  #floorplanSvg.editing .win-rotate-handle{ opacity: .9; pointer-events: all; }
 
   .window-obj{ pointer-events: none; }
   #floorplanSvg.editing .window-obj{ pointer-events: visiblePainted; cursor: move; }
@@ -415,6 +422,8 @@
         <option value="webp">WebP</option>
         <option value="pdf">PDF</option>
       </select>
+      <button class="tbtn ghost" id="undoBtn" type="button" style="display:none;" title="Step back one change at a time">↶ Undo</button>
+      <button class="tbtn ghost" id="redoBtn" type="button" style="display:none;" title="Step forward one change you undid">↷ Redo</button>
       <button class="tbtn ghost" id="resetBtn" type="button" title="Discard all your edits and reload the original layout">Reset to default</button>
       <span class="tb-hint" id="tbHint">Click any door to open/close it — always on.</span>
       <span class="tb-status"><span class="tb-dot" id="saveDot"></span><span id="saveLabel"></span></span>
@@ -456,7 +465,7 @@
         <rect class="wall-rect" x="80" y="870" width="425" height="570" fill="var(--fill-bath)"/>
         <rect class="wall-rect" x="70" y="1440" width="530" height="280" fill="var(--fill-bed)"/>
         <!-- entry foyer: stepped L (shallow left + tall right) -->
-        <path class="wall-path" data-id="wallpath-foyer" d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" fill="var(--fill-foyer)"/>
+        <path class="wall-path" data-id="wallpath-foyer" data-skip-edges="4" d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" fill="var(--fill-foyer)"/>
         <rect class="wall-rect" x="505" y="595" width="90" height="845" fill="var(--fill-circ)"/>
         <!-- irregular stairwell shaft: narrow sliver up top, widens lower -->
         <path class="wall-path" data-id="wallpath-stairs" d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z" fill="var(--fill-stair)"/>
@@ -511,11 +520,11 @@
         </g>
 
         <g class="door" data-id="doorC">
-          <line class="door-erase" x1="505" y1="1055" x2="505" y2="1125" stroke="var(--fill-circ)" stroke-width="12"/>
-          <line class="door-closer" x1="505" y1="1055" x2="505" y2="1125" stroke="var(--wall)" stroke-width="9"/>
+          <line class="door-erase" x1="505" y1="1300" x2="505" y2="1370" stroke="var(--fill-circ)" stroke-width="12"/>
+          <line class="door-closer" x1="505" y1="1300" x2="505" y2="1370" stroke="var(--wall)" stroke-width="9"/>
           <g class="door-swing" fill="none" stroke="var(--ink-soft)">
-            <path d="M505,1055 L435,1055" stroke-width="2"/>
-            <path d="M435,1055 A70,70 0 0 1 505,1125" stroke-width="1.5" opacity=".7"/>
+            <path d="M505,1300 L435,1300" stroke-width="2"/>
+            <path d="M435,1300 A70,70 0 0 1 505,1370" stroke-width="1.5" opacity=".7"/>
           </g>
         </g>
 
@@ -543,6 +552,15 @@
           <g class="door-swing" fill="none" stroke="var(--ink-soft)">
             <path d="M855,460 A55,55 0 0 0 810,405" stroke-width="1.5" opacity=".7"/>
             <path d="M855,460 L855,405" stroke-width="2"/>
+          </g>
+        </g>
+
+        <g class="door" data-id="doorStorageE">
+          <line class="door-erase" x1="880" y1="280" x2="880" y2="350" stroke="var(--fill-bath)" stroke-width="12"/>
+          <line class="door-closer" x1="880" y1="280" x2="880" y2="350" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M880,280 L950,280" stroke-width="2"/>
+            <path d="M950,280 A70,70 0 0 1 880,350" stroke-width="1.5" opacity=".7"/>
           </g>
         </g>
 
@@ -584,15 +602,6 @@
           <g class="door-swing" stroke="var(--ink-soft)">
             <line x1="875" y1="1070" x2="875" y2="1130" stroke-width="2"/>
             <line x1="885" y1="1070" x2="885" y2="1130" stroke-width="2"/>
-          </g>
-        </g>
-
-        <g class="door" data-id="doorSalonFront">
-          <line class="door-erase" x1="805" y1="1985" x2="895" y2="1985" stroke="var(--fill-living)" stroke-width="12"/>
-          <line class="door-closer" x1="805" y1="1985" x2="895" y2="1985" stroke="var(--wall)" stroke-width="9"/>
-          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
-            <path d="M895,1985 A90,90 0 0 0 805,1895" stroke-width="1.5" opacity=".7"/>
-            <path d="M895,1985 L895,1895" stroke-width="2"/>
           </g>
         </g>
 
@@ -639,6 +648,11 @@
           <line x1="-4" y1="70" x2="4" y2="70" stroke="var(--ink-soft)" stroke-width="2.5"/>
         </g>
         <g class="window-obj" data-id="win-6" data-len="90" data-orient="v" transform="translate(1245,1400)">
+          <line class="win-erase" x1="0" y1="0" x2="0" y2="90" stroke="var(--fill-living)" stroke-width="9"/>
+          <line x1="-4" y1="10" x2="4" y2="10" stroke="var(--ink-soft)" stroke-width="2.5"/>
+          <line x1="-4" y1="80" x2="4" y2="80" stroke="var(--ink-soft)" stroke-width="2.5"/>
+        </g>
+        <g class="window-obj" data-id="win-7" data-len="90" data-orient="v" transform="translate(1245,1650)">
           <line class="win-erase" x1="0" y1="0" x2="0" y2="90" stroke="var(--fill-living)" stroke-width="9"/>
           <line x1="-4" y1="10" x2="4" y2="10" stroke="var(--ink-soft)" stroke-width="2.5"/>
           <line x1="-4" y1="80" x2="4" y2="80" stroke="var(--ink-soft)" stroke-width="2.5"/>
@@ -877,6 +891,29 @@
     var addWallBtn = document.getElementById('addWallBtn');
     var addDoorBtn = document.getElementById('addDoorBtn');
     var addTerraceBtn = document.getElementById('addTerraceBtn');
+    var undoBtn = document.getElementById('undoBtn');
+    var redoBtn = document.getElementById('redoBtn');
+    var UNDO_KEY = 'floorplan_undo_v1';
+    var REDO_KEY = 'floorplan_redo_v1';
+    var undoStack = [], redoStack = [];
+    try{ undoStack = JSON.parse(sessionStorage.getItem(UNDO_KEY) || '[]'); }catch(e){ undoStack = []; }
+    try{ redoStack = JSON.parse(sessionStorage.getItem(REDO_KEY) || '[]'); }catch(e){ redoStack = []; }
+    function updateUndoRedoButtons(){
+      undoBtn.disabled = !undoStack.length;
+      redoBtn.disabled = !redoStack.length;
+      undoBtn.style.opacity = undoStack.length ? '1' : '.4';
+      redoBtn.style.opacity = redoStack.length ? '1' : '.4';
+    }
+    function pushUndo(prevStateStr){
+      try{
+        undoStack.push(prevStateStr);
+        if(undoStack.length > 50) undoStack.shift();
+        sessionStorage.setItem(UNDO_KEY, JSON.stringify(undoStack));
+        redoStack = [];
+        sessionStorage.setItem(REDO_KEY, JSON.stringify(redoStack));
+      }catch(e){}
+      updateUndoRedoButtons();
+    }
     var formatSelect = document.getElementById('formatSelect');
     var resetBtn = document.getElementById('resetBtn');
     var hint = document.getElementById('tbHint');
@@ -887,7 +924,7 @@
     var saveTimer = null;
     var customCounter = 0;
 
-    function emptyState(){ return {lines:{},texts:{},groups:{},doors:{},walls:{},deletedTexts:[],customTexts:[],windows:{},deletedWindows:[],customWindows:[],deletedSegs:[],customSegs:[],customDoors:[],customTerraces:[]}; }
+    function emptyState(){ return {lines:{},texts:{},groups:{},doors:{},walls:{},deletedTexts:[],customTexts:[],windows:{},deletedWindows:[],customWindows:[],deletedSegs:[],customSegs:[],customDoors:[],customTerraces:[],deletedDoors:[]}; }
 
     function svgPoint(evt){
       var pt = svg.createSVGPoint();
@@ -896,6 +933,29 @@
       if(!ctm) return {x:0,y:0};
       var p = pt.matrixTransform(ctm.inverse());
       return {x:p.x, y:p.y};
+    }
+    function snapAngle(deg){
+      var step = 15, tol = 7;
+      var nearest = Math.round(deg/step)*step;
+      var diff = Math.abs(((deg-nearest+540)%360)-180);
+      return diff <= tol ? nearest : deg;
+    }
+    // snap a moving endpoint to line up exactly with a fixed reference point, when close —
+    // this is what makes a wall "auto-straighten" as you drag it into place
+    function snapPoint(nx, ny, refX, refY, tol){
+      tol = tol || 10;
+      if(Math.abs(nx-refX) <= tol) nx = refX;
+      else if(Math.abs(ny-refY) <= tol) ny = refY;
+      return {x:nx, y:ny};
+    }
+    function groupTranslate(el){
+      var tfm = el.getAttribute('transform');
+      var m = tfm && tfm.match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/);
+      return {x: m?parseFloat(m[1]):0, y: m?parseFloat(m[2]):0};
+    }
+    function applyGroupTransform(el, tx, ty, rot){
+      el.dataset.rot = rot || 0;
+      el.setAttribute('transform', 'translate('+tx+' '+ty+') rotate('+(rot||0)+')');
     }
 
     function loadState(){
@@ -921,6 +981,11 @@
     }
 
     var state = loadState();
+    // frozen text snapshot of `state` as it stood at the end of the last persistAll() —
+    // kept separate from the live, mutable `state` object because a few delete actions
+    // mutate `state.deletedXxx` arrays directly before calling persistAll(); if the undo
+    // stack captured the live object at that point it would already include the deletion
+    var lastSnapshot = JSON.stringify(state);
 
     // ---------- assign stable ids by DOM order ----------
     var lines = Array.prototype.slice.call(svg.querySelectorAll('.dim-line'));
@@ -935,6 +1000,12 @@
     groups.forEach(function(el,i){ el.dataset.id = 'group-'+i; });
     wallRects.forEach(function(el,i){ el.dataset.id = 'wall-'+i; });
     // doors and windows already carry data-id from markup
+
+    // ---------- drop any preset doors the viewer deleted on a previous visit ----------
+    (state.deletedDoors||[]).forEach(function(id){
+      var el = doors.find(function(d){ return d.dataset.id === id; });
+      if(el){ el.remove(); doors = doors.filter(function(d){ return d !== el; }); }
+    });
 
     // ---------- remove any texts/windows the viewer deleted last visit ----------
     (state.deletedTexts||[]).forEach(function(id){
@@ -977,13 +1048,38 @@
     });
     windows.forEach(function(el){
       var s = state.windows[el.dataset.id];
-      if(s){ el.setAttribute('transform','translate('+s.tx+' '+s.ty+')'); }
+      if(s){
+        applyGroupTransform(el, s.tx, s.ty, s.rot);
+        if(s.x2 !== undefined){
+          var erase = el.querySelector('.win-erase');
+          if(erase){
+            erase.setAttribute('x2', s.x2); erase.setAttribute('y2', s.y2);
+            var x1e = parseFloat(erase.getAttribute('x1')), y1e = parseFloat(erase.getAttribute('y1'));
+            var ticksR = Array.prototype.filter.call(el.querySelectorAll('line'), function(l){ return l !== erase; });
+            if(ticksR.length >= 2){
+              var lenR = Math.hypot(s.x2-x1e, s.y2-y1e) || 1;
+              var pxR = -(s.y2-y1e)/lenR*4, pyR = (s.x2-x1e)/lenR*4;
+              var q1x = x1e + (s.x2-x1e)*0.12, q1y = y1e + (s.y2-y1e)*0.12;
+              var q2x = x1e + (s.x2-x1e)*0.88, q2y = y1e + (s.y2-y1e)*0.88;
+              ticksR[0].setAttribute('x1', q1x-pxR); ticksR[0].setAttribute('y1', q1y-pyR);
+              ticksR[0].setAttribute('x2', q1x+pxR); ticksR[0].setAttribute('y2', q1y+pyR);
+              ticksR[1].setAttribute('x1', q2x-pxR); ticksR[1].setAttribute('y1', q2y-pyR);
+              ticksR[1].setAttribute('x2', q2x+pxR); ticksR[1].setAttribute('y2', q2y+pyR);
+            }
+          }
+        }
+      }
     });
 
-    // ---------- handles layer (drawn on top) ----------
+    // ---------- handles layer (drawn on top of everything else) ----------
     var handlesLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
     handlesLayer.setAttribute('id','handlesLayer');
     svg.appendChild(handlesLayer);
+
+    // windows/doors go above even the handles layer, so a window/door's own stretch and
+    // rotate handles always win over a wall-segment's hit-line sitting at the same spot
+    var windowsLayerEl = document.getElementById('windowsLayer');
+    if(windowsLayerEl) svg.appendChild(windowsLayerEl);
 
     // Hover-only tooltip: a floating HTML box, shown only while the pointer is over an
     // element and following the cursor — never rendered inline. (A plain SVG <title> child
@@ -1123,15 +1219,36 @@
       selectedSeg = rec;
       if(rec) rec.el.classList.add('seg-selected');
     }
-    function removeWallSeg(rec){
+    // two rooms sharing a wall each draw their own copy of it (normally a perfect,
+    // invisible overlap) — find the other room's copy of the same wall so deleting one
+    // side actually clears the whole thing instead of leaving a "double wall" behind
+    function findDuplicateSeg(x1,y1,x2,y2, exclude){
+      var tol = 3;
+      function close(a,b){ return Math.abs(a-b) <= tol; }
+      return wallSegs.find(function(s){
+        if(s === exclude) return false;
+        var e = s.el;
+        var sx1=e.x1.baseVal.value, sy1=e.y1.baseVal.value, sx2=e.x2.baseVal.value, sy2=e.y2.baseVal.value;
+        var sameDir = close(sx1,x1)&&close(sy1,y1)&&close(sx2,x2)&&close(sy2,y2);
+        var revDir = close(sx1,x2)&&close(sy1,y2)&&close(sx2,x1)&&close(sy2,y1);
+        return sameDir || revDir;
+      });
+    }
+    function removeWallSeg(rec, _isDupPass){
       if(selectedSeg === rec) selectedSeg = null;
       var hs = segHandles[rec.id];
       if(hs){ hs.h1.remove(); hs.h2.remove(); hs.hit.remove(); delete segHandles[rec.id]; }
+      var e = rec.el;
+      var x1=e.x1.baseVal.value, y1=e.y1.baseVal.value, x2=e.x2.baseVal.value, y2=e.y2.baseVal.value;
       rec.el.remove();
       wallSegs = wallSegs.filter(function(s){ return s !== rec; });
       if(!rec.custom){
         state.deletedSegs = state.deletedSegs || [];
         if(state.deletedSegs.indexOf(rec.id) === -1) state.deletedSegs.push(rec.id);
+      }
+      if(!_isDupPass){
+        var dup = findDuplicateSeg(x1,y1,x2,y2, rec);
+        if(dup) removeWallSeg(dup, true);
       }
     }
 
@@ -1172,7 +1289,9 @@
     // decompose every wall-path into its edges
     wallPaths.forEach(function(el){
       var pts = wallPathPoints[el.dataset.id];
+      var skip = (el.dataset.skipEdges || '').split(',').filter(Boolean).map(Number);
       for(var i=0;i<pts.length;i++){
+        if(skip.indexOf(i) !== -1) continue; // no wall here by default (e.g. a terrace opening)
         var a = pts[i], b = pts[(i+1)%pts.length];
         makeWallSeg(a.x,a.y,b.x,b.y, el, i);
       }
@@ -1385,6 +1504,38 @@
       var isDoor = (el.dataset.id||'').indexOf('customdoor') === 0;
       addTip(el, isDoor ? 'Drag to reposition this door · click then Delete to remove it' : 'Drag to reposition this window · click then Delete to remove it');
       el.addEventListener('pointerdown', function(e){ selectWindow(el); startDrag(e, {type:'group', group:el}); });
+
+      // a stretch-handle at the far end of the opening — drag it to make the window/door
+      // longer or shorter (e.g. to span a whole wall), independent of moving the whole thing
+      var erase = el.querySelector('.win-erase');
+      if(erase){
+        var svgns = 'http://www.w3.org/2000/svg';
+        var far = document.createElementNS(svgns,'circle');
+        far.setAttribute('class','win-stretch-handle');
+        far.setAttribute('cx', erase.getAttribute('x2')); far.setAttribute('cy', erase.getAttribute('y2'));
+        far.setAttribute('r', 7);
+        el.appendChild(far);
+        addTip(far, 'Drag to stretch this opening longer or shorter');
+        far.addEventListener('pointerdown', function(e){
+          selectWindow(el);
+          startDrag(e, {type:'win-stretch', group:el, erase:erase, handle:far});
+        });
+
+        // a rotate-handle offset above the opening's midpoint — drag it around to turn the
+        // whole window/door to match any wall direction
+        var midX = (parseFloat(erase.getAttribute('x1')) + parseFloat(erase.getAttribute('x2')))/2;
+        var midY = (parseFloat(erase.getAttribute('y1')) + parseFloat(erase.getAttribute('y2')))/2;
+        var rotHandle = document.createElementNS(svgns,'circle');
+        rotHandle.setAttribute('class','win-rotate-handle');
+        rotHandle.setAttribute('cx', midX); rotHandle.setAttribute('cy', midY - 26);
+        rotHandle.setAttribute('r', 6);
+        el.appendChild(rotHandle);
+        addTip(rotHandle, 'Drag around to rotate this to match any wall');
+        rotHandle.addEventListener('pointerdown', function(e){
+          selectWindow(el);
+          startDrag(e, {type:'win-rotate', group:el});
+        });
+      }
     }
     windows.forEach(registerWindow);
     function removeWindow(el){
@@ -1479,7 +1630,7 @@
       el.setAttribute('class','window-obj');
       el.dataset.id = 'customwin-' + Date.now() + '-' + customCounter;
       el.dataset.custom = '1';
-      el.setAttribute('transform','translate(300,900)');
+      el.setAttribute('transform','translate(300,900)'); el.dataset.rot = '0';
       el.innerHTML =
         '<line class="win-erase" x1="0" y1="0" x2="90" y2="0" stroke="var(--fill-bed)" stroke-width="9"/>' +
         '<line x1="9" y1="-4" x2="9" y2="4" stroke="var(--ink-soft)" stroke-width="2.5"/>' +
@@ -1509,7 +1660,7 @@
       el.setAttribute('class','window-obj');
       el.dataset.id = 'customdoor-' + Date.now() + '-' + customCounter;
       el.dataset.custom = '1';
-      el.setAttribute('transform','translate(300,900)');
+      el.setAttribute('transform','translate(300,900)'); el.dataset.rot = '0';
       el.innerHTML =
         '<line class="win-erase" x1="0" y1="0" x2="80" y2="0" stroke="var(--card)" stroke-width="12"/>' +
         '<path d="M0,0 L0,-70 A70,70 0 0 1 70,0" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>';
@@ -1544,6 +1695,10 @@
         var m2 = tfm && tfm.match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/);
         info.origX = m2 ? parseFloat(m2[1]) : 0;
         info.origY = m2 ? parseFloat(m2[2]) : 0;
+      } else if(info.type === 'win-rotate'){
+        info.cx = groupTranslate(info.group).x; info.cy = groupTranslate(info.group).y;
+        info.origRot = parseFloat(info.group.dataset.rot || 0);
+        info.startAngle = Math.atan2(p.y - info.cy, p.x - info.cx) * 180/Math.PI;
       } else if(info.type === 'wall-edge'){
         info.origX = info.wall.x.baseVal.value; info.origY = info.wall.y.baseVal.value;
         info.origW = info.wall.width.baseVal.value; info.origH = info.wall.height.baseVal.value;
@@ -1556,6 +1711,9 @@
       } else if(info.type === 'seg-whole'){
         info.origX1 = info.seg.x1.baseVal.value; info.origY1 = info.seg.y1.baseVal.value;
         info.origX2 = info.seg.x2.baseVal.value; info.origY2 = info.seg.y2.baseVal.value;
+      } else if(info.type === 'win-stretch'){
+        info.origX = parseFloat(info.erase.getAttribute('x2'));
+        info.origY = parseFloat(info.erase.getAttribute('y2'));
       }
       active = info;
     }
@@ -1580,7 +1738,13 @@
         if(active.angle !== null){ active.text.setAttribute('transform','rotate('+active.angle+' '+tx+' '+ty+')'); }
       } else if(active.type === 'group'){
         var gx = active.origX + dx, gy = active.origY + dy;
-        active.group.setAttribute('transform','translate('+gx+' '+gy+')');
+        applyGroupTransform(active.group, gx, gy, active.group.dataset.rot);
+      } else if(active.type === 'win-rotate'){
+        // the rotate handle is a child of the group at a fixed local offset, so rotating
+        // the group's own transform turns the handle along with it — nothing else to sync
+        var curAngle = Math.atan2(p.y - active.cy, p.x - active.cx) * 180/Math.PI;
+        var newRot = snapAngle(active.origRot + (curAngle - active.startAngle));
+        applyGroupTransform(active.group, active.cx, active.cy, newRot);
       } else if(active.type === 'wall-edge'){
         var w = active.wall, minSize = 40, nx2_, ny2_, nw, nh;
         if(active.edge === 'right'){ nw = Math.max(minSize, active.origW + dx); w.width.baseVal.value = nw; }
@@ -1591,14 +1755,26 @@
         syncRectSegs(w);
       } else if(active.type === 'wall-vertex'){
         var pid = active.path.dataset.id;
+        var pts = wallPathPoints[pid];
         var nvx = active.origX + dx, nvy = active.origY + dy;
-        wallPathPoints[pid][active.index] = {x:nvx, y:nvy};
-        active.path.setAttribute('d', buildPathD(wallPathPoints[pid]));
+        // auto-straighten: snap into line with either neighboring corner when close
+        var prev = pts[(active.index - 1 + pts.length) % pts.length];
+        var next = pts[(active.index + 1) % pts.length];
+        var sp = snapPoint(nvx, nvy, prev.x, prev.y);
+        sp = snapPoint(sp.x, sp.y, next.x, next.y);
+        nvx = sp.x; nvy = sp.y;
+        pts[active.index] = {x:nvx, y:nvy};
+        active.path.setAttribute('d', buildPathD(pts));
         var h = wallPathHandles[pid][active.index];
         h.setAttribute('cx', nvx); h.setAttribute('cy', nvy);
         syncPathSegs(active.path);
       } else if(active.type === 'seg-end'){
         var snx = active.origX + dx, sny = active.origY + dy;
+        // auto-straighten: snap this end into line with the segment's other (fixed) end
+        var fixedX = active.end===1 ? active.seg.x2.baseVal.value : active.seg.x1.baseVal.value;
+        var fixedY = active.end===1 ? active.seg.y2.baseVal.value : active.seg.y1.baseVal.value;
+        var sp2 = snapPoint(snx, sny, fixedX, fixedY);
+        snx = sp2.x; sny = sp2.y;
         if(active.end === 1){ active.seg.x1.baseVal.value = snx; active.seg.y1.baseVal.value = sny; }
         else { active.seg.x2.baseVal.value = snx; active.seg.y2.baseVal.value = sny; }
         active.handle.setAttribute('cx', snx); active.handle.setAttribute('cy', sny);
@@ -1608,6 +1784,22 @@
         active.seg.x2.baseVal.value = snx2; active.seg.y2.baseVal.value = sny2;
         active.h1.setAttribute('cx', snx1); active.h1.setAttribute('cy', sny1);
         active.h2.setAttribute('cx', snx2); active.h2.setAttribute('cy', sny2);
+      } else if(active.type === 'win-stretch'){
+        var wx = active.origX + dx, wy = active.origY + dy;
+        active.erase.setAttribute('x2', wx); active.erase.setAttribute('y2', wy);
+        active.handle.setAttribute('cx', wx); active.handle.setAttribute('cy', wy);
+        var x1 = parseFloat(active.erase.getAttribute('x1')), y1 = parseFloat(active.erase.getAttribute('y1'));
+        var ticks = Array.prototype.filter.call(active.group.querySelectorAll('line'), function(l){ return l !== active.erase; });
+        if(ticks.length >= 2){
+          var len = Math.hypot(wx-x1, wy-y1) || 1;
+          var perpX = -(wy-y1)/len*4, perpY = (wx-x1)/len*4;
+          var p1x = x1 + (wx-x1)*0.12, p1y = y1 + (wy-y1)*0.12;
+          var p2x = x1 + (wx-x1)*0.88, p2y = y1 + (wy-y1)*0.88;
+          ticks[0].setAttribute('x1', p1x-perpX); ticks[0].setAttribute('y1', p1y-perpY);
+          ticks[0].setAttribute('x2', p1x+perpX); ticks[0].setAttribute('y2', p1y+perpY);
+          ticks[1].setAttribute('x1', p2x-perpX); ticks[1].setAttribute('y1', p2y-perpY);
+          ticks[1].setAttribute('x2', p2x+perpX); ticks[1].setAttribute('y2', p2y+perpY);
+        }
       }
     });
     document.addEventListener('pointerup', function(){
@@ -1617,10 +1809,12 @@
     });
 
     function persistAll(){
+      pushUndo(lastSnapshot);
       var s = emptyState();
       s.deletedTexts = (state.deletedTexts || []).slice();
       s.deletedWindows = (state.deletedWindows || []).slice();
       s.deletedSegs = (state.deletedSegs || []).slice();
+      s.deletedDoors = (state.deletedDoors || []).slice();
       wallSegs.filter(function(w){ return w.custom; }).forEach(function(w){
         s.customSegs.push({id:w.id, x1:w.el.x1.baseVal.value, y1:w.el.y1.baseVal.value, x2:w.el.x2.baseVal.value, y2:w.el.y2.baseVal.value});
       });
@@ -1658,16 +1852,22 @@
         s.walls[el.dataset.id] = {pts: wallPathPoints[el.dataset.id]};
       });
       windows.forEach(function(el){
-        var tfm = el.getAttribute('transform');
-        var m = tfm && tfm.match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/);
-        var tx = m?parseFloat(m[1]):0, ty = m?parseFloat(m[2]):0;
+        var t = groupTranslate(el);
+        var rot = parseFloat(el.dataset.rot || 0);
+        var erase = el.querySelector('.win-erase');
+        var rec = {tx:t.x, ty:t.y, rot:rot};
+        if(erase){ rec.x2 = parseFloat(erase.getAttribute('x2')); rec.y2 = parseFloat(erase.getAttribute('y2')); }
         if(el.dataset.custom === '1'){
-          s.customWindows.push({id: el.dataset.id, tx:tx, ty:ty, html: el.innerHTML});
+          var clone = el.cloneNode(true);
+          clone.querySelectorAll('.win-stretch-handle,.win-rotate-handle').forEach(function(h){ h.remove(); });
+          rec.id = el.dataset.id; rec.html = clone.innerHTML;
+          s.customWindows.push(rec);
         } else {
-          s.windows[el.dataset.id] = {tx:tx, ty:ty};
+          s.windows[el.dataset.id] = rec;
         }
       });
       state = s;
+      lastSnapshot = JSON.stringify(s);
       saveState(s);
     }
 
@@ -1689,9 +1889,9 @@
     (state.customWindows||[]).forEach(function(rec){
       var el = document.createElementNS('http://www.w3.org/2000/svg','g');
       el.setAttribute('class','window-obj');
-      el.setAttribute('transform','translate('+rec.tx+' '+rec.ty+')');
       el.dataset.id = rec.id;
       el.dataset.custom = '1';
+      applyGroupTransform(el, rec.tx, rec.ty, rec.rot);
       el.innerHTML = rec.html || '<line class="win-erase" x1="0" y1="0" x2="90" y2="0" stroke="var(--fill-bed)" stroke-width="9"/>';
       document.getElementById('windowsLayer').appendChild(el);
       windows.push(el);
@@ -1712,16 +1912,42 @@
         hit.setAttribute('stroke', 'transparent');
         hit.setAttribute('stroke-width', '46');
         hit.style.pointerEvents = 'stroke';
-        addTip(hit, el.classList.contains('closed') ? 'Click to open this door' : 'Click to close this door');
-        el.insertBefore(hit, el.firstChild);
+        addTip(hit, (el.classList.contains('closed') ? 'Click to open this door' : 'Click to close this door') + ' · select it (in Edit layout) then Delete to remove it permanently');
+        // moved into the topmost handles layer (not left inside the door group) so it isn't
+        // covered by a wall-segment's own hit-line sitting at the same spot
+        handlesLayer.appendChild(hit);
+        el._hitEl = hit;
+        hit.addEventListener('click', function(e){
+          if(active) return; // ignore click that ends a drag
+          if(editing) selectDoor(el);
+          el.classList.toggle('closed');
+          hit.dataset.tipText = (el.classList.contains('closed') ? 'Click to open this door' : 'Click to close this door') + ' · select it (in Edit layout) then Delete to remove it permanently';
+          persistAll();
+        });
       }
-      el.addEventListener('click', function(e){
-        if(active) return; // ignore click that ends a drag
-        el.classList.toggle('closed');
-        var hitEl = el.querySelector('.door-hit');
-        if(hitEl) hitEl.dataset.tipText = el.classList.contains('closed') ? 'Click to open this door' : 'Click to close this door';
+    });
+    var selectedDoor = null;
+    function selectDoor(el){
+      if(selectedDoor) selectedDoor.classList.remove('door-selected');
+      selectedDoor = el;
+      if(el) el.classList.add('door-selected');
+    }
+    function removeDoor(el){
+      if(selectedDoor === el) selectedDoor = null;
+      state.deletedDoors = state.deletedDoors || [];
+      if(state.deletedDoors.indexOf(el.dataset.id) === -1) state.deletedDoors.push(el.dataset.id);
+      doors = doors.filter(function(d){ return d !== el; });
+      if(el._hitEl) el._hitEl.remove();
+      el.remove();
+    }
+    document.addEventListener('keydown', function(e){
+      if(!editing) return;
+      if(document.activeElement === textEditor) return;
+      if((e.key === 'Delete' || e.key === 'Backspace') && selectedDoor){
+        e.preventDefault();
+        removeDoor(selectedDoor);
         persistAll();
-      });
+      }
     });
 
     // ---------- edit-mode toggle ----------
@@ -1736,17 +1962,47 @@
       addWallBtn.style.display = on ? 'inline-flex' : 'none';
       addDoorBtn.style.display = on ? 'inline-flex' : 'none';
       addTerraceBtn.style.display = on ? 'inline-flex' : 'none';
+      undoBtn.style.display = on ? 'inline-flex' : 'none';
+      redoBtn.style.display = on ? 'inline-flex' : 'none';
       hint.textContent = on
         ? 'Click any wall to select it, then Delete to remove it, or drag it to move/resize it. Drag anything else the same way. Scroll on a label to resize its text, double-click to rename it, select + Delete to remove it.'
         : 'Click any door to open/close it — always on.';
-      if(!on){ selectText(null); selectWindow(null); selectSeg(null); closeTextEditor(false); stopWallDrawMode(); stopTerraceDrawMode(); }
+      if(!on){ selectText(null); selectWindow(null); selectSeg(null); selectDoor(null); closeTextEditor(false); stopWallDrawMode(); stopTerraceDrawMode(); }
     }
     editBtn.addEventListener('click', function(){ setEditing(!editing); });
 
     resetBtn.addEventListener('click', function(){
-      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+      try{
+        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(UNDO_KEY);
+        sessionStorage.removeItem(REDO_KEY);
+      }catch(e){}
       location.reload();
     });
+
+    undoBtn.addEventListener('click', function(){
+      if(!undoStack.length) return;
+      try{
+        redoStack.push(JSON.stringify(state));
+        sessionStorage.setItem(REDO_KEY, JSON.stringify(redoStack));
+        var prev = undoStack.pop();
+        sessionStorage.setItem(UNDO_KEY, JSON.stringify(undoStack));
+        localStorage.setItem(STORAGE_KEY, prev);
+      }catch(e){}
+      location.reload();
+    });
+    redoBtn.addEventListener('click', function(){
+      if(!redoStack.length) return;
+      try{
+        undoStack.push(JSON.stringify(state));
+        sessionStorage.setItem(UNDO_KEY, JSON.stringify(undoStack));
+        var next = redoStack.pop();
+        sessionStorage.setItem(REDO_KEY, JSON.stringify(redoStack));
+        localStorage.setItem(STORAGE_KEY, next);
+      }catch(e){}
+      location.reload();
+    });
+    updateUndoRedoButtons();
 
     // ---------- export: PNG / JPEG / WebP / PDF ----------
     // Tries the `downloads` capability first (works only while this page is framed live
