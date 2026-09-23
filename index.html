@@ -18,6 +18,13 @@
     --card:#f7f5f0;
     --row-alt:#eeebe3;
     --shadow: 0 12px 40px -12px rgba(42,39,35,.35);
+    --fill-bed:#f3ead8;
+    --fill-bath:#dcebee;
+    --fill-kitchen:#f6e4d4;
+    --fill-living:#e6ecdd;
+    --fill-circ:#e7e4dd;
+    --fill-foyer:#eee1cd;
+    --fill-stair:#efe6c8;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){
@@ -37,6 +44,13 @@
       --card:#232019;
       --row-alt:#2a271f;
       --shadow: 0 12px 40px -12px rgba(0,0,0,.6);
+      --fill-bed:#332c22;
+      --fill-bath:#1f2e33;
+      --fill-kitchen:#332821;
+      --fill-living:#26301f;
+      --fill-circ:#2a2822;
+      --fill-foyer:#2f2820;
+      --fill-stair:#312c1d;
       color-scheme: dark;
     }
   }
@@ -56,6 +70,13 @@
     --card:#232019;
     --row-alt:#2a271f;
     --shadow: 0 12px 40px -12px rgba(0,0,0,.6);
+    --fill-bed:#332c22;
+    --fill-bath:#1f2e33;
+    --fill-kitchen:#332821;
+    --fill-living:#26301f;
+    --fill-circ:#2a2822;
+    --fill-foyer:#2f2820;
+    --fill-stair:#312c1d;
     color-scheme: dark;
   }
 
@@ -232,7 +253,36 @@
         <marker id="bigArrow" markerWidth="14" markerHeight="14" refX="9" refY="4" orient="auto">
           <path d="M0,0 L10,4 L0,8 Z" fill="var(--red)"/>
         </marker>
+        <symbol id="bedIcon" viewBox="0 0 150 210">
+          <rect x="2" y="2" width="146" height="206" rx="12" fill="var(--card)" stroke="var(--ink)" stroke-width="3"/>
+          <line x1="2" y1="58" x2="148" y2="58" stroke="var(--ink)" stroke-width="2.5"/>
+          <rect x="14" y="14" width="52" height="36" rx="8" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+          <rect x="84" y="14" width="52" height="36" rx="8" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+          <path d="M14,120 Q75,105 136,120" fill="none" stroke="var(--ink)" stroke-width="2" opacity=".6"/>
+        </symbol>
+        <symbol id="nightstand" viewBox="0 0 40 40">
+          <rect x="2" y="2" width="36" height="36" rx="4" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/>
+          <circle cx="20" cy="20" r="4" fill="var(--ink)"/>
+        </symbol>
       </defs>
+
+      <!-- ================= FUNCTION FILL TINTS ================= -->
+      <g stroke="none">
+        <path d="M95,220 L155,185 L600,185 L600,575 L95,575 Z" fill="var(--fill-bed)"/>
+        <rect x="85" y="595" width="420" height="275" fill="var(--fill-bed)"/>
+        <rect x="80" y="880" width="425" height="560" fill="var(--fill-bed)"/>
+        <rect x="70" y="1450" width="530" height="270" fill="var(--fill-bed)"/>
+        <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" fill="var(--fill-foyer)"/>
+        <rect x="505" y="595" width="90" height="855" fill="var(--fill-circ)"/>
+        <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z" fill="var(--fill-stair)"/>
+        <rect x="690" y="215" width="190" height="245" fill="var(--fill-bath)"/>
+        <rect x="605" y="965" width="275" height="285" fill="var(--fill-circ)"/>
+        <rect x="880" y="610" width="70" height="640" fill="var(--fill-circ)"/>
+        <rect x="880" y="230" width="365" height="380" fill="var(--fill-bed)"/>
+        <rect x="955" y="620" width="290" height="310" fill="var(--fill-bath)"/>
+        <rect x="955" y="940" width="290" height="290" fill="var(--fill-kitchen)"/>
+        <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z" fill="var(--fill-living)"/>
+      </g>
 
       <!-- ================= WALLS (pencil layer) ================= -->
       <g fill="none" stroke="var(--line)" stroke-width="2.5" stroke-linejoin="round">
@@ -241,7 +291,7 @@
         <rect x="80" y="880" width="425" height="560"/>
         <rect x="70" y="1450" width="530" height="270"/>
         <!-- entry foyer: stepped L (shallow left + tall right) -->
-        <path d="M70,1855 L605,1855 L605,1655 L895,1655 L895,1985 L70,1985 Z"/>
+        <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z"/>
         <rect x="505" y="595" width="90" height="855"/>
         <!-- irregular stairwell shaft: narrow sliver up top, widens lower -->
         <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z"/>
@@ -261,7 +311,7 @@
         <rect x="85" y="595" width="420" height="275" stroke="var(--green)"/>
         <rect x="80" y="880" width="425" height="560" stroke="var(--pink)"/>
         <rect x="70" y="1450" width="530" height="270" stroke="var(--green)"/>
-        <path d="M70,1855 L605,1855 L605,1655 L895,1655 L895,1985 L70,1985 Z" stroke="var(--orange)"/>
+        <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" stroke="var(--orange)"/>
         <rect x="505" y="595" width="90" height="855" stroke="var(--gray)"/>
         <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z" stroke="var(--gold)"/>
         <rect x="690" y="215" width="190" height="245" stroke="var(--blue)"/>
@@ -281,7 +331,7 @@
         <rect x="750" y="470" width="126" height="480" fill="url(#hatch)"/>
       </g>
 
-      <!-- ================= ROOM A ICONS (sloped soffit + built-in wardrobe + door) ================= -->
+      <!-- ================= ROOM A ICONS (sloped soffit + built-in wardrobe + door + bed) ================= -->
       <g stroke="var(--ink)" stroke-width="2" fill="none">
         <path d="M120,220 L175,192 L175,244" opacity=".7"/>
         <rect x="175" y="192" width="216" height="52" opacity=".8"/>
@@ -289,8 +339,14 @@
         <line x1="319" y1="192" x2="319" y2="244"/>
         <path d="M560,575 A80,80 0 0 0 480,655" opacity=".6"/>
       </g>
+      <use href="#bedIcon" x="115" y="280" width="150" height="230"/>
+      <use href="#nightstand" x="115" y="510" width="42" height="42"/>
 
-      <!-- ROOM C: two dividing rails + built-in wardrobe at bottom -->
+      <!-- ROOM B: bed against the left wall -->
+      <use href="#bedIcon" x="115" y="630" width="150" height="195"/>
+      <use href="#nightstand" x="115" y="828" width="38" height="38"/>
+
+      <!-- ROOM C: two dividing rails + built-in wardrobe at bottom + bed in the top band -->
       <g stroke="var(--ink)" stroke-width="2" fill="none">
         <line x1="95" y1="965" x2="495" y2="965" opacity=".7"/>
         <line x1="95" y1="1195" x2="495" y2="1195" opacity=".7"/>
@@ -301,14 +357,16 @@
         <rect x="300" y="1390" width="95" height="34"/>
         <line x1="347" y1="1390" x2="347" y2="1424"/>
       </g>
+      <use href="#bedIcon" x="140" y="895" width="150" height="195"/>
 
-      <!-- ROOM D: wardrobe + table w/ leg brace -->
+      <!-- ROOM D: wardrobe/desk + bed -->
       <g stroke="var(--ink)" stroke-width="2" fill="none">
-        <rect x="95" y="1468" width="340" height="96"/>
-        <line x1="95" y1="1500" x2="435" y2="1500"/>
+        <rect x="95" y="1468" width="220" height="80" opacity=".8"/>
+        <line x1="95" y1="1490" x2="315" y2="1490" opacity=".6"/>
         <rect x="95" y="1615" width="62" height="42"/>
         <line x1="95" y1="1657" x2="130" y2="1690"/>
       </g>
+      <use href="#bedIcon" x="360" y="1485" width="130" height="185"/>
 
       <!-- LIFT car -->
       <g stroke="var(--ink)" stroke-width="2" fill="none" opacity=".75">
@@ -323,6 +381,10 @@
         <path d="M855,460 A55,55 0 0 0 810,405" opacity=".6"/>
       </g>
 
+      <!-- ROOM E: bed against left wall -->
+      <use href="#bedIcon" x="915" y="380" width="150" height="200"/>
+      <use href="#nightstand" x="915" y="580" width="38" height="38"/>
+
       <!-- ROOM F bathroom fixtures: 2 wall cabinets w/ knobs, basin+faucet, oval mirror over a stand -->
       <g stroke="var(--ink)" stroke-width="2" fill="none">
         <rect x="985" y="630" width="80" height="50"/>
@@ -336,7 +398,7 @@
         <ellipse cx="1167" cy="800" rx="32" ry="42"/>
       </g>
 
-      <!-- KITCHEN: FRIGO/HORNO MICRO labels over counter, stove w/ 3 burners, small fixture at right wall -->
+      <!-- KITCHEN: FRIGO/HORNO MICRO labels over counter, stove w/ 3 burners, sink, small fixture at right wall -->
       <g stroke="var(--ink)" stroke-width="2" fill="none">
         <rect x="970" y="950" width="80" height="34"/>
         <rect x="1060" y="950" width="90" height="34"/>
@@ -344,15 +406,30 @@
         <circle cx="1025" cy="1035" r="14"/>
         <circle cx="1025" cy="1075" r="14"/>
         <circle cx="1025" cy="1115" r="14"/>
-        <line x1="1150" y1="1000" x2="1235" y2="1000"/>
-        <rect x="1190" y="1010" width="35" height="35"/>
-        <circle cx="1207" cy="1027" r="6" fill="var(--ink)"/>
+        <rect x="1090" y="1000" width="145" height="60"/>
+        <rect x="1108" y="1012" width="55" height="36" rx="4"/>
+        <circle cx="1136" cy="1000" r="3" fill="var(--ink)"/>
+        <line x1="1150" y1="1075" x2="1235" y2="1075"/>
+        <rect x="1190" y="1085" width="35" height="35"/>
+        <circle cx="1207" cy="1102" r="6" fill="var(--ink)"/>
       </g>
 
-      <!-- SALON sofa/table alcove + door arcs -->
+      <!-- SALON: console unit in the sofa alcove, an L-sofa + coffee table + rug furnishing the open living space, door arcs -->
       <g stroke="var(--ink)" stroke-width="2" fill="none">
         <path d="M850,1470 L850,1420 L920,1420 L920,1470" opacity=".8"/>
         <rect x="850" y="1470" width="70" height="55" opacity=".8"/>
+
+        <!-- L-shaped sofa against the right wall -->
+        <path d="M1000,1300 h205 v170 h-60 v-110 h-145 z" opacity=".9"/>
+        <line x1="1000" y1="1330" x2="1145" y2="1330" opacity=".5"/>
+        <line x1="1060" y1="1300" x2="1060" y2="1330" opacity=".5"/>
+        <line x1="1120" y1="1300" x2="1120" y2="1330" opacity=".5"/>
+        <line x1="1175" y1="1330" x2="1175" y2="1470" opacity=".5"/>
+
+        <!-- coffee table + rug -->
+        <rect x="1000" y="1420" width="90" height="55" rx="6" opacity=".85"/>
+        <rect x="960" y="1390" width="230" height="150" rx="14" stroke-dasharray="3 6" opacity=".5"/>
+
         <path d="M895,1985 A90,90 0 0 0 805,1895" opacity=".6"/>
         <path d="M1245,1780 A80,80 0 0 1 1165,1860" opacity=".6"/>
       </g>
