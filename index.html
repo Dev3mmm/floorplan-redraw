@@ -224,6 +224,39 @@
   #floorplanSvg.editing .drag-handle{ opacity: .9; pointer-events: all; }
   .drag-handle:active{ cursor: grabbing; }
 
+  /* ---- wall-edge resize handles (the 10 rectangular rooms) ---- */
+  .wall-edge-handle{
+    fill: var(--blue);
+    stroke: var(--card);
+    stroke-width: 2;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #floorplanSvg.editing .wall-edge-handle{ opacity: .85; pointer-events: all; }
+  .wall-edge-handle.horiz{ cursor: ns-resize; }
+  .wall-edge-handle.vert{ cursor: ew-resize; }
+  #floorplanSvg.editing .wall-rect{ cursor: default; }
+  #floorplanSvg.editing .dim-text.text-selected{
+    outline: none;
+    filter: drop-shadow(0 0 0 var(--blue));
+  }
+  .text-selected{ fill: var(--blue) !important; }
+
+  #textEditor{
+    position: absolute;
+    display: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    text-align: center;
+    border: 2px solid var(--blue);
+    border-radius: 5px;
+    background: var(--card);
+    color: var(--ink);
+    padding: 2px 6px;
+    z-index: 30;
+    outline: none;
+  }
+
   .legend{
     display:flex;
     flex-wrap:wrap;
@@ -320,16 +353,19 @@
   <header>
     <p class="eyebrow">Traced from hand sketch · shapes + dimensions verified against zoomed source photo</p>
     <h1>Apartment Floor Plan</h1>
-    <p class="sub">Digital redraw of the pencil-and-marker sketch. Every room outline, corridor, the stepped entry foyer, the L-shaped Salón, and the irregular stairwell shaft are traced to match the original shapes — not simplified into plain boxes — with every dimension label carried over exactly as marked. Click "Edit layout" below to drag any dimension line, label, or furniture piece; click any door to open or close it. Edits save automatically in this browser and reload next time you open this page.</p>
+    <p class="sub">Digital redraw of the pencil-and-marker sketch. Every room outline, corridor, the stepped entry foyer, the L-shaped Salón, and the irregular stairwell shaft are traced to match the original shapes — not simplified into plain boxes — with every dimension label carried over exactly as marked. Click "Edit layout" to drag any dimension line (grab the middle to move it whole, or an end to resize it), any label, or any furniture piece; grab a blue dot to resize one of the 10 rectangular rooms; scroll on a label to grow or shrink its text; double-click a label to rename it; select a label and press Delete to remove it; "+ Add label" drops in a new one. Click any door any time to open or close it. Edits save automatically in this browser and reload next time you open this page here. Use "Save as PDF" to export the current state as a file.</p>
   </header>
 
   <div class="plate">
     <div class="toolbar">
       <button class="tbtn" id="editToggle" type="button" aria-pressed="false">✏️ Edit layout</button>
+      <button class="tbtn ghost" id="addLabelBtn" type="button" style="display:none;">+ Add label</button>
+      <button class="tbtn ghost" id="pdfBtn" type="button">⬇ Save as PDF</button>
       <button class="tbtn ghost" id="resetBtn" type="button">Reset to default</button>
       <span class="tb-hint" id="tbHint">Click any door to open/close it — always on.</span>
       <span class="tb-status"><span class="tb-dot" id="saveDot"></span><span id="saveLabel"></span></span>
     </div>
+    <input id="textEditor" autocomplete="off" spellcheck="false"/>
     <svg id="floorplanSvg" viewBox="0 0 1500 2010" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <pattern id="hatch" width="14" height="14" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
@@ -366,32 +402,27 @@
         <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" fill="var(--fill-foyer)"/>
         <rect x="505" y="595" width="90" height="845" fill="var(--fill-circ)"/>
         <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z" fill="var(--fill-stair)"/>
-        <rect x="690" y="215" width="190" height="245" fill="var(--fill-bath)"/>
-        <rect x="605" y="965" width="275" height="265" fill="var(--fill-circ)"/>
-        <rect x="880" y="610" width="70" height="620" fill="var(--fill-circ)"/>
-        <rect x="880" y="230" width="365" height="380" fill="var(--fill-bed)"/>
-        <rect x="955" y="610" width="290" height="320" fill="var(--fill-bath)"/>
-        <rect x="955" y="930" width="290" height="300" fill="var(--fill-kitchen)"/>
         <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z" fill="var(--fill-living)"/>
       </g>
 
       <!-- ================= WALLS: single thick unified layer, no seams ================= -->
+      <!-- rect walls below double as their room's floor fill AND are wall-resizable (drag any edge) -->
       <g fill="none" stroke="var(--wall)" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
         <path d="M95,220 L155,185 L600,185 L600,595 L95,595 Z"/>
-        <rect x="85" y="595" width="420" height="275"/>
-        <rect x="80" y="870" width="425" height="570"/>
-        <rect x="70" y="1440" width="530" height="280"/>
+        <rect class="wall-rect" x="85" y="595" width="420" height="275" fill="var(--fill-bed)"/>
+        <rect class="wall-rect" x="80" y="870" width="425" height="570" fill="var(--fill-bath)"/>
+        <rect class="wall-rect" x="70" y="1440" width="530" height="280" fill="var(--fill-bed)"/>
         <!-- entry foyer: stepped L (shallow left + tall right) -->
         <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z"/>
-        <rect x="505" y="595" width="90" height="845"/>
+        <rect class="wall-rect" x="505" y="595" width="90" height="845" fill="var(--fill-circ)"/>
         <!-- irregular stairwell shaft: narrow sliver up top, widens lower -->
         <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z"/>
-        <rect x="690" y="215" width="190" height="245"/>
-        <rect x="605" y="965" width="275" height="265"/>
-        <rect x="880" y="610" width="70" height="620"/>
-        <rect x="880" y="230" width="365" height="380"/>
-        <rect x="955" y="610" width="290" height="320"/>
-        <rect x="955" y="930" width="290" height="300"/>
+        <rect class="wall-rect" x="690" y="215" width="190" height="245" fill="var(--fill-bath)"/>
+        <rect class="wall-rect" x="605" y="965" width="275" height="265" fill="var(--fill-circ)"/>
+        <rect class="wall-rect" x="880" y="610" width="70" height="620" fill="var(--fill-circ)"/>
+        <rect class="wall-rect" x="880" y="230" width="365" height="380" fill="var(--fill-bed)"/>
+        <rect class="wall-rect" x="955" y="610" width="290" height="320" fill="var(--fill-bath)"/>
+        <rect class="wall-rect" x="955" y="930" width="290" height="300" fill="var(--fill-kitchen)"/>
         <!-- Salon: wide top band + narrower lower band (mirrors the foyer step) -->
         <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z"/>
       </g>
@@ -771,17 +802,25 @@
     </svg>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
   (function(){
     var STORAGE_KEY = 'floorplan_edits_v1';
     var svg = document.getElementById('floorplanSvg');
+    var plate = document.querySelector('.plate');
     var editBtn = document.getElementById('editToggle');
+    var addLabelBtn = document.getElementById('addLabelBtn');
+    var pdfBtn = document.getElementById('pdfBtn');
     var resetBtn = document.getElementById('resetBtn');
     var hint = document.getElementById('tbHint');
     var saveDot = document.getElementById('saveDot');
     var saveLabel = document.getElementById('saveLabel');
+    var textEditor = document.getElementById('textEditor');
     var editing = false;
     var saveTimer = null;
+    var customCounter = 0;
+
+    function emptyState(){ return {lines:{},texts:{},groups:{},doors:{},walls:{},deletedTexts:[],customTexts:[]}; }
 
     function svgPoint(evt){
       var pt = svg.createSVGPoint();
@@ -795,8 +834,11 @@
     function loadState(){
       try{
         var raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : {lines:{},texts:{},groups:{},doors:{}};
-      }catch(e){ return {lines:{},texts:{},groups:{},doors:{}}; }
+        var s = raw ? JSON.parse(raw) : emptyState();
+        var e = emptyState();
+        for(var k in e){ if(!(k in s)) s[k] = e[k]; }
+        return s;
+      }catch(e){ return emptyState(); }
     }
     function saveState(state){
       try{
@@ -818,28 +860,37 @@
     var texts = Array.prototype.slice.call(svg.querySelectorAll('.dim-text'));
     var groups = Array.prototype.slice.call(svg.querySelectorAll('.drag-group'));
     var doors = Array.prototype.slice.call(svg.querySelectorAll('.door'));
+    var wallRects = Array.prototype.slice.call(svg.querySelectorAll('.wall-rect'));
 
     lines.forEach(function(el,i){ el.dataset.id = 'line-'+i; });
-    texts.forEach(function(el,i){ el.dataset.id = 'text-'+i; });
+    texts.forEach(function(el,i){ el.dataset.id = 'text-'+i; el.dataset.orig = el.textContent; });
     groups.forEach(function(el,i){ el.dataset.id = 'group-'+i; });
+    wallRects.forEach(function(el,i){ el.dataset.id = 'wall-'+i; });
     // doors already carry data-id from markup
+
+    // ---------- remove any texts the viewer deleted last visit ----------
+    (state.deletedTexts||[]).forEach(function(id){
+      var el = texts.find(function(t){ return t.dataset.id === id; });
+      if(el){ el.remove(); texts = texts.filter(function(t){ return t !== el; }); }
+    });
 
     // ---------- restore saved state ----------
     lines.forEach(function(el){
       var s = state.lines[el.dataset.id];
       if(s){ el.setAttribute('x1',s.x1); el.setAttribute('y1',s.y1); el.setAttribute('x2',s.x2); el.setAttribute('y2',s.y2); }
     });
-    texts.forEach(function(el){
-      var s = state.texts[el.dataset.id];
-      if(s){
-        el.setAttribute('x', s.x); el.setAttribute('y', s.y);
-        var tf = el.getAttribute('transform');
-        if(tf){
-          var m = tf.match(/rotate\(([-\d.]+)/);
-          if(m) el.setAttribute('transform','rotate('+m[1]+' '+s.x+' '+s.y+')');
-        }
+    function applyTextState(el, s){
+      if(!s) return;
+      el.setAttribute('x', s.x); el.setAttribute('y', s.y);
+      var tf = el.getAttribute('transform');
+      if(tf){
+        var m = tf.match(/rotate\(([-\d.]+)/);
+        if(m) el.setAttribute('transform','rotate('+m[1]+' '+s.x+' '+s.y+')');
       }
-    });
+      if(s.fontSize) el.setAttribute('font-size', s.fontSize);
+      if(typeof s.content === 'string') el.textContent = s.content;
+    }
+    texts.forEach(function(el){ applyTextState(el, state.texts[el.dataset.id]); });
     groups.forEach(function(el){
       var s = state.groups[el.dataset.id];
       if(s){ el.setAttribute('transform','translate('+s.tx+' '+s.ty+')'); }
@@ -848,33 +899,162 @@
       var s = state.doors[el.dataset.id];
       if(s && s.closed){ el.classList.add('closed'); }
     });
+    wallRects.forEach(function(el){
+      var s = state.walls[el.dataset.id];
+      if(s){ el.setAttribute('x',s.x); el.setAttribute('y',s.y); el.setAttribute('width',s.width); el.setAttribute('height',s.height); }
+    });
 
     // ---------- handles layer (drawn on top) ----------
     var handlesLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
     handlesLayer.setAttribute('id','handlesLayer');
     svg.appendChild(handlesLayer);
 
-    var handleMap = {}; // lineId -> {h1, h2}
-    function makeHandle(x,y){
+    var handleMap = {};
+    function makeHandle(x,y,cls){
       var c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-      c.setAttribute('class','drag-handle');
+      c.setAttribute('class', cls || 'drag-handle');
       c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',8);
       handlesLayer.appendChild(c);
       return c;
     }
-    lines.forEach(function(el){
+    function registerLine(el){
       var h1 = makeHandle(el.x1.baseVal.value, el.y1.baseVal.value);
       var h2 = makeHandle(el.x2.baseVal.value, el.y2.baseVal.value);
       handleMap[el.dataset.id] = {h1:h1, h2:h2};
       h1.addEventListener('pointerdown', function(e){ startDrag(e, {type:'line-end', line:el, end:1, handle:h1}); });
       h2.addEventListener('pointerdown', function(e){ startDrag(e, {type:'line-end', line:el, end:2, handle:h2}); });
-    });
 
-    texts.forEach(function(el){
-      el.addEventListener('pointerdown', function(e){ startDrag(e, {type:'text', text:el}); });
-    });
+      // fat invisible hit-line — grab anywhere along the line to move it whole, no need to grab an endpoint
+      var hit = document.createElementNS('http://www.w3.org/2000/svg','line');
+      hit.setAttribute('x1', el.x1.baseVal.value); hit.setAttribute('y1', el.y1.baseVal.value);
+      hit.setAttribute('x2', el.x2.baseVal.value); hit.setAttribute('y2', el.y2.baseVal.value);
+      hit.setAttribute('stroke','transparent');
+      hit.setAttribute('stroke-width','22');
+      hit.classList.add('line-hit');
+      handlesLayer.appendChild(hit);
+      hit.addEventListener('pointerdown', function(e){ startDrag(e, {type:'line-whole', line:el, h1:h1, h2:h2}); });
+    }
+    lines.forEach(registerLine);
+
+    // ---------- wall-edge resize handles (10 rectangular rooms) ----------
+    var wallHandleMap = {}; // wallId -> {top,bottom,left,right}
+    function registerWallRect(el){
+      var x = el.x.baseVal.value, y = el.y.baseVal.value, w = el.width.baseVal.value, h = el.height.baseVal.value;
+      var top = makeHandle(x+w/2, y, 'wall-edge-handle horiz');
+      var bottom = makeHandle(x+w/2, y+h, 'wall-edge-handle horiz');
+      var left = makeHandle(x, y+h/2, 'wall-edge-handle vert');
+      var right = makeHandle(x+w, y+h/2, 'wall-edge-handle vert');
+      wallHandleMap[el.dataset.id] = {top:top,bottom:bottom,left:left,right:right};
+      top.addEventListener('pointerdown', function(e){ startDrag(e, {type:'wall-edge', wall:el, edge:'top'}); });
+      bottom.addEventListener('pointerdown', function(e){ startDrag(e, {type:'wall-edge', wall:el, edge:'bottom'}); });
+      left.addEventListener('pointerdown', function(e){ startDrag(e, {type:'wall-edge', wall:el, edge:'left'}); });
+      right.addEventListener('pointerdown', function(e){ startDrag(e, {type:'wall-edge', wall:el, edge:'right'}); });
+    }
+    function syncWallHandles(el){
+      var hs = wallHandleMap[el.dataset.id];
+      if(!hs) return;
+      var x = el.x.baseVal.value, y = el.y.baseVal.value, w = el.width.baseVal.value, h = el.height.baseVal.value;
+      hs.top.setAttribute('cx',x+w/2); hs.top.setAttribute('cy',y);
+      hs.bottom.setAttribute('cx',x+w/2); hs.bottom.setAttribute('cy',y+h);
+      hs.left.setAttribute('cx',x); hs.left.setAttribute('cy',y+h/2);
+      hs.right.setAttribute('cx',x+w); hs.right.setAttribute('cy',y+h/2);
+    }
+    wallRects.forEach(registerWallRect);
+
+    // ---------- text: drag, font-size wheel, double-click to edit, select+Delete to remove ----------
+    var selectedText = null;
+    function selectText(el){
+      if(selectedText) selectedText.classList.remove('text-selected');
+      selectedText = el;
+      if(el) el.classList.add('text-selected');
+    }
+    function registerText(el){
+      el.addEventListener('pointerdown', function(e){ selectText(el); startDrag(e, {type:'text', text:el}); });
+      el.addEventListener('dblclick', function(e){ if(editing){ e.preventDefault(); e.stopPropagation(); openTextEditor(el); } });
+      el.addEventListener('wheel', function(e){
+        if(!editing) return;
+        e.preventDefault();
+        var fs = parseFloat(el.getAttribute('font-size')) || parseFloat(window.getComputedStyle(el).fontSize) || 16;
+        fs = Math.max(8, Math.min(60, fs + (e.deltaY < 0 ? 1 : -1)));
+        el.setAttribute('font-size', fs);
+        persistAll();
+      }, {passive:false});
+    }
+    texts.forEach(registerText);
+
     groups.forEach(function(el){
       el.addEventListener('pointerdown', function(e){ startDrag(e, {type:'group', group:el}); });
+    });
+
+    // ---------- inline text editor (HTML input overlaid on the SVG) ----------
+    function openTextEditor(el){
+      var box = el.getBoundingClientRect();
+      var plateBox = plate.getBoundingClientRect();
+      textEditor.style.left = (box.left - plateBox.left) + 'px';
+      textEditor.style.top = (box.top - plateBox.top - 4) + 'px';
+      textEditor.style.width = Math.max(80, box.width + 24) + 'px';
+      textEditor.style.fontSize = window.getComputedStyle(el).fontSize;
+      textEditor.style.display = 'block';
+      textEditor.value = el.textContent;
+      textEditor._target = el;
+      textEditor.focus();
+      textEditor.select();
+    }
+    function closeTextEditor(commit){
+      var el = textEditor._target;
+      if(el && commit){
+        var v = textEditor.value.trim();
+        if(v){ el.textContent = v; }
+        else if(el.dataset.wasNew){ removeText(el); }
+      }
+      textEditor.style.display = 'none';
+      textEditor._target = null;
+      if(el) persistAll();
+    }
+    textEditor.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); closeTextEditor(true); }
+      else if(e.key === 'Escape'){ e.preventDefault(); closeTextEditor(false); }
+    });
+    textEditor.addEventListener('blur', function(){ closeTextEditor(true); });
+
+    function removeText(el){
+      if(selectedText === el) selectedText = null;
+      var isCustom = el.dataset.custom === '1';
+      if(!isCustom) {
+        state.deletedTexts = state.deletedTexts || [];
+        if(state.deletedTexts.indexOf(el.dataset.id) === -1) state.deletedTexts.push(el.dataset.id);
+      }
+      texts = texts.filter(function(t){ return t !== el; });
+      el.remove();
+    }
+
+    document.addEventListener('keydown', function(e){
+      if(!editing) return;
+      if(document.activeElement === textEditor) return;
+      if((e.key === 'Delete' || e.key === 'Backspace') && selectedText){
+        e.preventDefault();
+        removeText(selectedText);
+        persistAll();
+      }
+    });
+
+    addLabelBtn.addEventListener('click', function(){
+      customCounter++;
+      var el = document.createElementNS('http://www.w3.org/2000/svg','text');
+      el.setAttribute('class','dim-text');
+      el.setAttribute('x', 750); el.setAttribute('y', 1000 + customCounter*4);
+      el.setAttribute('font-size', 18); el.setAttribute('font-weight', '600');
+      el.setAttribute('text-anchor','middle');
+      el.setAttribute('fill','var(--ink)');
+      el.dataset.custom = '1';
+      el.dataset.id = 'custom-' + Date.now() + '-' + customCounter;
+      el.dataset.wasNew = '1';
+      el.textContent = 'New label';
+      document.getElementById('labelsLayer').appendChild(el);
+      texts.push(el);
+      registerText(el);
+      selectText(el);
+      openTextEditor(el);
     });
 
     // ---------- drag engine ----------
@@ -887,6 +1067,9 @@
       if(info.type === 'line-end'){
         info.origX = info.end===1 ? info.line.x1.baseVal.value : info.line.x2.baseVal.value;
         info.origY = info.end===1 ? info.line.y1.baseVal.value : info.line.y2.baseVal.value;
+      } else if(info.type === 'line-whole'){
+        info.origX1 = info.line.x1.baseVal.value; info.origY1 = info.line.y1.baseVal.value;
+        info.origX2 = info.line.x2.baseVal.value; info.origY2 = info.line.y2.baseVal.value;
       } else if(info.type === 'text'){
         info.origX = parseFloat(info.text.getAttribute('x'));
         info.origY = parseFloat(info.text.getAttribute('y'));
@@ -898,6 +1081,9 @@
         var m2 = tfm && tfm.match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/);
         info.origX = m2 ? parseFloat(m2[1]) : 0;
         info.origY = m2 ? parseFloat(m2[2]) : 0;
+      } else if(info.type === 'wall-edge'){
+        info.origX = info.wall.x.baseVal.value; info.origY = info.wall.y.baseVal.value;
+        info.origW = info.wall.width.baseVal.value; info.origH = info.wall.height.baseVal.value;
       }
       active = info;
     }
@@ -910,6 +1096,12 @@
         if(active.end === 1){ active.line.x1.baseVal.value = nx; active.line.y1.baseVal.value = ny; }
         else { active.line.x2.baseVal.value = nx; active.line.y2.baseVal.value = ny; }
         active.handle.setAttribute('cx', nx); active.handle.setAttribute('cy', ny);
+      } else if(active.type === 'line-whole'){
+        var nx1 = active.origX1+dx, ny1 = active.origY1+dy, nx2 = active.origX2+dx, ny2 = active.origY2+dy;
+        active.line.x1.baseVal.value = nx1; active.line.y1.baseVal.value = ny1;
+        active.line.x2.baseVal.value = nx2; active.line.y2.baseVal.value = ny2;
+        active.h1.setAttribute('cx', nx1); active.h1.setAttribute('cy', ny1);
+        active.h2.setAttribute('cx', nx2); active.h2.setAttribute('cy', ny2);
       } else if(active.type === 'text'){
         var tx = active.origX + dx, ty = active.origY + dy;
         active.text.setAttribute('x', tx); active.text.setAttribute('y', ty);
@@ -917,6 +1109,13 @@
       } else if(active.type === 'group'){
         var gx = active.origX + dx, gy = active.origY + dy;
         active.group.setAttribute('transform','translate('+gx+' '+gy+')');
+      } else if(active.type === 'wall-edge'){
+        var w = active.wall, minSize = 40, nx2_, ny2_, nw, nh;
+        if(active.edge === 'right'){ nw = Math.max(minSize, active.origW + dx); w.width.baseVal.value = nw; }
+        else if(active.edge === 'left'){ nw = Math.max(minSize, active.origW - dx); w.x.baseVal.value = active.origX + active.origW - nw; w.width.baseVal.value = nw; }
+        else if(active.edge === 'bottom'){ nh = Math.max(minSize, active.origH + dy); w.height.baseVal.value = nh; }
+        else if(active.edge === 'top'){ nh = Math.max(minSize, active.origH - dy); w.y.baseVal.value = active.origY + active.origH - nh; w.height.baseVal.value = nh; }
+        syncWallHandles(w);
       }
     });
     document.addEventListener('pointerup', function(){
@@ -926,12 +1125,23 @@
     });
 
     function persistAll(){
-      var s = {lines:{},texts:{},groups:{},doors:{}};
+      var s = emptyState();
+      s.deletedTexts = (state.deletedTexts || []).slice();
       lines.forEach(function(el){
         s.lines[el.dataset.id] = {x1:el.x1.baseVal.value,y1:el.y1.baseVal.value,x2:el.x2.baseVal.value,y2:el.y2.baseVal.value};
       });
       texts.forEach(function(el){
-        s.texts[el.dataset.id] = {x:parseFloat(el.getAttribute('x')), y:parseFloat(el.getAttribute('y'))};
+        var rec = {x:parseFloat(el.getAttribute('x')), y:parseFloat(el.getAttribute('y'))};
+        var fs = el.getAttribute('font-size');
+        if(fs) rec.fontSize = parseFloat(fs);
+        if(el.dataset.custom === '1'){
+          rec.content = el.textContent;
+          rec.custom = true;
+          s.customTexts.push(Object.assign({id: el.dataset.id}, rec));
+        } else {
+          if(el.textContent !== el.dataset.orig) rec.content = el.textContent;
+          s.texts[el.dataset.id] = rec;
+        }
       });
       groups.forEach(function(el){
         var tfm = el.getAttribute('transform');
@@ -941,9 +1151,28 @@
       doors.forEach(function(el){
         s.doors[el.dataset.id] = {closed: el.classList.contains('closed')};
       });
+      wallRects.forEach(function(el){
+        s.walls[el.dataset.id] = {x:el.x.baseVal.value,y:el.y.baseVal.value,width:el.width.baseVal.value,height:el.height.baseVal.value};
+      });
       state = s;
       saveState(s);
     }
+
+    // ---------- rebuild custom texts saved from a previous visit ----------
+    (state.customTexts||[]).forEach(function(rec){
+      var el = document.createElementNS('http://www.w3.org/2000/svg','text');
+      el.setAttribute('class','dim-text');
+      el.setAttribute('x', rec.x); el.setAttribute('y', rec.y);
+      el.setAttribute('font-size', rec.fontSize || 18); el.setAttribute('font-weight', '600');
+      el.setAttribute('text-anchor','middle');
+      el.setAttribute('fill','var(--ink)');
+      el.dataset.custom = '1';
+      el.dataset.id = rec.id;
+      el.textContent = rec.content || 'Label';
+      document.getElementById('labelsLayer').appendChild(el);
+      texts.push(el);
+      registerText(el);
+    });
 
     // ---------- doors: click to open/close, always active ----------
     // give each door a fat invisible hit-line so it's easy to click precisely
@@ -975,9 +1204,11 @@
       editBtn.classList.toggle('active', on);
       editBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
       editBtn.textContent = on ? '✓ Editing — drag anything' : '✏️ Edit layout';
+      addLabelBtn.style.display = on ? 'inline-flex' : 'none';
       hint.textContent = on
-        ? 'Drag the red dots, any label, or any piece of furniture. Doors always click to open/close.'
+        ? 'Drag anything, or grab a blue dot to resize a room. Scroll on a label to resize its text, double-click to rename it, select + Delete to remove it.'
         : 'Click any door to open/close it — always on.';
+      if(!on){ selectText(null); closeTextEditor(false); }
     }
     editBtn.addEventListener('click', function(){ setEditing(!editing); });
 
@@ -985,6 +1216,83 @@
       try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
       location.reload();
     });
+
+    // ---------- export as PDF (uses the downloads capability; never window.print()) ----------
+    pdfBtn.addEventListener('click', function(){
+      exportPDF();
+    });
+    function exportPDF(){
+      pdfBtn.disabled = true;
+      var origText = pdfBtn.textContent;
+      pdfBtn.textContent = 'Preparing…';
+      var wasEditing = editing;
+      if(wasEditing) setEditing(false);
+
+      var clone = svg.cloneNode(true);
+      var hl = clone.querySelector('#handlesLayer');
+      if(hl) hl.remove();
+      clone.removeAttribute('id');
+      var vb = svg.viewBox.baseVal;
+      var svgData = new XMLSerializer().serializeToString(clone);
+      var svgBlob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>' + svgData], {type:'image/svg+xml;charset=utf-8'});
+      var url = URL.createObjectURL(svgBlob);
+      var img = new Image();
+      img.onload = function(){
+        try{
+          var scale = 2;
+          var canvas = document.createElement('canvas');
+          canvas.width = vb.width * scale; canvas.height = vb.height * scale;
+          var ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#f7f5f0';
+          ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(async function(pngBlob){
+            try{
+              var dataUrl = canvas.toDataURL('image/png');
+              var jsPDFCtor = (window.jspdf && window.jspdf.jsPDF);
+              if(!jsPDFCtor){ throw new Error('pdf library unavailable'); }
+              var pdf = new jsPDFCtor({
+                orientation: canvas.width > canvas.height ? 'l' : 'p',
+                unit: 'pt',
+                format: [canvas.width/scale, canvas.height/scale]
+              });
+              pdf.addImage(dataUrl, 'PNG', 0, 0, canvas.width/scale, canvas.height/scale);
+              var pdfBlob = pdf.output('blob');
+
+              var downloads = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null;
+              if(downloads){
+                try{
+                  await downloads.save({filename: 'floor-plan.pdf', data: pdfBlob});
+                  pdfBtn.textContent = '✓ Saved';
+                }catch(err){
+                  pdfBtn.textContent = (err && err.code === 'declined') ? origText : 'Save failed';
+                }
+              } else {
+                pdfBtn.textContent = 'Unavailable here';
+              }
+            }catch(err){
+              pdfBtn.textContent = 'Export failed';
+            }finally{
+              setTimeout(function(){ pdfBtn.textContent = origText; pdfBtn.disabled = false; }, 1800);
+              URL.revokeObjectURL(url);
+              if(wasEditing) setEditing(true);
+            }
+          }, 'image/png');
+        }catch(err){
+          pdfBtn.textContent = 'Export failed';
+          setTimeout(function(){ pdfBtn.textContent = origText; pdfBtn.disabled = false; }, 1800);
+          URL.revokeObjectURL(url);
+          if(wasEditing) setEditing(true);
+        }
+      };
+      img.onerror = function(){
+        pdfBtn.textContent = 'Export failed';
+        setTimeout(function(){ pdfBtn.textContent = origText; pdfBtn.disabled = false; }, 1800);
+        URL.revokeObjectURL(url);
+        if(wasEditing) setEditing(true);
+      };
+      img.src = url;
+    }
 
     setEditing(false);
   })();
@@ -1029,5 +1337,5 @@
     </table>
   </div>
 
-  <footer>Redrawn from the original pencil sketch · shapes and labels verified against zoomed source crops · not an engineering-grade survey · edits are saved only in this browser, on this device</footer>
+  <footer>Redrawn from the original pencil sketch · shapes and labels verified against zoomed source crops · not an engineering-grade survey · edits are saved only in this browser, on this device · the 4 irregular shapes (Room A's cut corner, the foyer, stairwell, and Salón) aren't wall-resizable yet, only the 10 rectangular rooms are</footer>
 </div>
