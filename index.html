@@ -1315,11 +1315,26 @@
     // inside a Claude conversation). Falls back to a plain browser download, which is
     // blocked inside the claude.ai artifact sandbox but works normally on a page hosted
     // anywhere else (e.g. the GitHub Pages copy of this same file).
+    var CSS_VARS = ['--paper','--paper-2','--ink','--ink-soft','--line','--green','--pink','--blue',
+      '--gold','--red','--gray','--orange','--card','--row-alt','--fill-bed','--fill-bath',
+      '--fill-kitchen','--fill-living','--fill-circ','--fill-foyer','--fill-stair','--wall'];
+
     function renderToCanvas(cb){
       var clone = svg.cloneNode(true);
       var hl = clone.querySelector('#handlesLayer');
       if(hl) hl.remove();
       clone.removeAttribute('id');
+
+      // the cloned SVG is serialized standalone, so var(--x) references need their values
+      // inlined here — the page's own stylesheet isn't available once it's a separate file
+      var cs = getComputedStyle(document.documentElement);
+      var css = ':root{';
+      CSS_VARS.forEach(function(name){ css += name+':'+cs.getPropertyValue(name).trim()+';'; });
+      css += '}';
+      var styleEl = document.createElementNS('http://www.w3.org/2000/svg','style');
+      styleEl.textContent = css;
+      clone.insertBefore(styleEl, clone.firstChild);
+
       var vb = svg.viewBox.baseVal;
       var svgData = new XMLSerializer().serializeToString(clone);
       var svgBlob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>' + svgData], {type:'image/svg+xml;charset=utf-8'});
