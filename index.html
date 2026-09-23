@@ -253,6 +253,11 @@
   #floorplanSvg.editing .wall-vertex-handle{ opacity: .9; pointer-events: all; }
   #floorplanSvg.editing .wall-path{ cursor: default; }
 
+  .window-obj{ pointer-events: none; }
+  #floorplanSvg.editing .window-obj{ pointer-events: visiblePainted; cursor: move; }
+  #floorplanSvg.editing .window-obj .win-erase{ stroke-width: 16; }
+  #floorplanSvg.editing .window-obj.window-selected .win-erase{ filter: drop-shadow(0 0 0 var(--blue)); stroke: var(--blue) !important; opacity: .35; }
+
   #floatTip{
     position: fixed;
     display: none;
@@ -382,13 +387,14 @@
   <header>
     <p class="eyebrow">Traced from hand sketch · shapes + dimensions verified against zoomed source photo</p>
     <h1>Apartment Floor Plan</h1>
-    <p class="sub">Digital redraw of the pencil-and-marker sketch. Every room outline, corridor, the stepped entry foyer, the L-shaped Salón, and the irregular stairwell shaft are traced to match the original shapes — not simplified into plain boxes — with every dimension label carried over exactly as marked. Click "Edit layout" to drag any dimension line (grab the middle to move it whole, or an end to resize it), any label, or any furniture piece; grab a blue dot to resize one of the 10 rectangular rooms; scroll on a label to grow or shrink its text; double-click a label to rename it; select a label and press Delete to remove it; "+ Add label" drops in a new one. Click any door any time to open or close it. Edits save automatically in this browser and reload next time you open this page here. Use "Save as PDF" to export the current state as a file.</p>
+    <p class="sub">Digital redraw of the pencil-and-marker sketch. Every room outline, corridor, the stepped entry foyer, the L-shaped Salón, and the irregular stairwell shaft are traced to match the original shapes — not simplified into plain boxes — with every dimension label carried over exactly as marked. Click "Edit layout" to drag any dimension line (grab the middle to move it whole, or an end to resize it), any label, or any furniture piece; grab a blue dot to resize one of the 10 rectangular rooms; scroll on a label to grow or shrink its text; double-click a label to rename it; select a label and press Delete to remove it; "+ Add label" drops in a new one. Windows work the same way — drag any existing one onto a different wall, select + Delete to remove it, "+ Add window" creates a new one to drag into place. Click any door any time to open or close it. Edits save automatically in this browser and reload next time you open this page here. Use "Download" to export the current state as a PNG, JPEG, WebP or PDF file.</p>
   </header>
 
   <div class="plate">
     <div class="toolbar">
       <button class="tbtn" id="editToggle" type="button" aria-pressed="false" title="Turn on dragging for lines, labels, furniture and walls">✏️ Edit layout</button>
       <button class="tbtn ghost" id="addLabelBtn" type="button" style="display:none;" title="Create a new text label you can drag anywhere">+ Add label</button>
+      <button class="tbtn ghost" id="addWindowBtn" type="button" style="display:none;" title="Create a new window you can drag onto any wall">+ Add window</button>
       <button class="tbtn ghost" id="pdfBtn" type="button" title="Download the current plan (with your edits) as a file">⬇ Download</button>
       <select id="formatSelect" class="tbtn ghost" title="File format for the download">
         <option value="png">PNG</option>
@@ -587,22 +593,43 @@
         </g>
       </g>
 
-      <!-- ================= WINDOWS: gap + double tick on exterior walls ================= -->
-      <g stroke="var(--ink-soft)" stroke-width="2.5">
-        <line x1="340" y1="185" x2="440" y2="185" stroke="var(--fill-bed)" stroke-width="9"/>
-        <line x1="350" y1="181" x2="350" y2="189"/><line x1="430" y1="181" x2="430" y2="189"/>
-        <line x1="85" y1="680" x2="85" y2="750" stroke="var(--fill-bed)" stroke-width="9"/>
-        <line x1="81" y1="690" x2="89" y2="690"/><line x1="81" y1="740" x2="89" y2="740"/>
-        <line x1="80" y1="1080" x2="80" y2="1150" stroke="var(--fill-bed)" stroke-width="9"/>
-        <line x1="76" y1="1090" x2="84" y2="1090"/><line x1="76" y1="1140" x2="84" y2="1140"/>
-        <line x1="1000" y1="230" x2="1100" y2="230" stroke="var(--fill-bed)" stroke-width="9"/>
-        <line x1="1010" y1="226" x2="1010" y2="234"/><line x1="1090" y1="226" x2="1090" y2="234"/>
-        <line x1="1245" y1="680" x2="1245" y2="760" stroke="var(--fill-bath)" stroke-width="9"/>
-        <line x1="1241" y1="690" x2="1249" y2="690"/><line x1="1241" y1="750" x2="1249" y2="750"/>
-        <line x1="1245" y1="1000" x2="1245" y2="1080" stroke="var(--fill-kitchen)" stroke-width="9"/>
-        <line x1="1241" y1="1010" x2="1249" y2="1010"/><line x1="1241" y1="1070" x2="1249" y2="1070"/>
-        <line x1="1245" y1="1400" x2="1245" y2="1490" stroke="var(--fill-living)" stroke-width="9"/>
-        <line x1="1241" y1="1410" x2="1249" y2="1410"/><line x1="1241" y1="1480" x2="1249" y2="1480"/>
+      <!-- ================= WINDOWS: draggable + deletable, "+ Add window" creates new ones ================= -->
+      <g id="windowsLayer">
+        <g class="window-obj" data-id="win-0" data-len="100" data-orient="h" transform="translate(340,185)">
+          <line class="win-erase" x1="0" y1="0" x2="100" y2="0" stroke="var(--fill-bed)" stroke-width="9"/>
+          <line x1="10" y1="-4" x2="10" y2="4" stroke="var(--ink-soft)" stroke-width="2.5"/>
+          <line x1="90" y1="-4" x2="90" y2="4" stroke="var(--ink-soft)" stroke-width="2.5"/>
+        </g>
+        <g class="window-obj" data-id="win-1" data-len="70" data-orient="v" transform="translate(85,680)">
+          <line class="win-erase" x1="0" y1="0" x2="0" y2="70" stroke="var(--fill-bed)" stroke-width="9"/>
+          <line x1="-4" y1="10" x2="4" y2="10" stroke="var(--ink-soft)" stroke-width="2.5"/>
+          <line x1="-4" y1="60" x2="4" y2="60" stroke="var(--ink-soft)" stroke-width="2.5"/>
+        </g>
+        <g class="window-obj" data-id="win-2" data-len="70" data-orient="v" transform="translate(80,1080)">
+          <line class="win-erase" x1="0" y1="0" x2="0" y2="70" stroke="var(--fill-bed)" stroke-width="9"/>
+          <line x1="-4" y1="10" x2="4" y2="10" stroke="var(--ink-soft)" stroke-width="2.5"/>
+          <line x1="-4" y1="60" x2="4" y2="60" stroke="var(--ink-soft)" stroke-width="2.5"/>
+        </g>
+        <g class="window-obj" data-id="win-3" data-len="100" data-orient="h" transform="translate(1000,230)">
+          <line class="win-erase" x1="0" y1="0" x2="100" y2="0" stroke="var(--fill-bed)" stroke-width="9"/>
+          <line x1="10" y1="-4" x2="10" y2="4" stroke="var(--ink-soft)" stroke-width="2.5"/>
+          <line x1="90" y1="-4" x2="90" y2="4" stroke="var(--ink-soft)" stroke-width="2.5"/>
+        </g>
+        <g class="window-obj" data-id="win-4" data-len="80" data-orient="v" transform="translate(1245,680)">
+          <line class="win-erase" x1="0" y1="0" x2="0" y2="80" stroke="var(--fill-bath)" stroke-width="9"/>
+          <line x1="-4" y1="10" x2="4" y2="10" stroke="var(--ink-soft)" stroke-width="2.5"/>
+          <line x1="-4" y1="70" x2="4" y2="70" stroke="var(--ink-soft)" stroke-width="2.5"/>
+        </g>
+        <g class="window-obj" data-id="win-5" data-len="80" data-orient="v" transform="translate(1245,1000)">
+          <line class="win-erase" x1="0" y1="0" x2="0" y2="80" stroke="var(--fill-kitchen)" stroke-width="9"/>
+          <line x1="-4" y1="10" x2="4" y2="10" stroke="var(--ink-soft)" stroke-width="2.5"/>
+          <line x1="-4" y1="70" x2="4" y2="70" stroke="var(--ink-soft)" stroke-width="2.5"/>
+        </g>
+        <g class="window-obj" data-id="win-6" data-len="90" data-orient="v" transform="translate(1245,1400)">
+          <line class="win-erase" x1="0" y1="0" x2="0" y2="90" stroke="var(--fill-living)" stroke-width="9"/>
+          <line x1="-4" y1="10" x2="4" y2="10" stroke="var(--ink-soft)" stroke-width="2.5"/>
+          <line x1="-4" y1="80" x2="4" y2="80" stroke="var(--ink-soft)" stroke-width="2.5"/>
+        </g>
       </g>
 
       <!-- ================= STAIR HATCHING ================= -->
@@ -833,6 +860,7 @@
     var plate = document.querySelector('.plate');
     var editBtn = document.getElementById('editToggle');
     var addLabelBtn = document.getElementById('addLabelBtn');
+    var addWindowBtn = document.getElementById('addWindowBtn');
     var pdfBtn = document.getElementById('pdfBtn');
     var formatSelect = document.getElementById('formatSelect');
     var resetBtn = document.getElementById('resetBtn');
@@ -844,7 +872,7 @@
     var saveTimer = null;
     var customCounter = 0;
 
-    function emptyState(){ return {lines:{},texts:{},groups:{},doors:{},walls:{},deletedTexts:[],customTexts:[]}; }
+    function emptyState(){ return {lines:{},texts:{},groups:{},doors:{},walls:{},deletedTexts:[],customTexts:[],windows:{},deletedWindows:[],customWindows:[]}; }
 
     function svgPoint(evt){
       var pt = svg.createSVGPoint();
@@ -885,17 +913,22 @@
     var groups = Array.prototype.slice.call(svg.querySelectorAll('.drag-group'));
     var doors = Array.prototype.slice.call(svg.querySelectorAll('.door'));
     var wallRects = Array.prototype.slice.call(svg.querySelectorAll('.wall-rect'));
+    var windows = Array.prototype.slice.call(svg.querySelectorAll('.window-obj'));
 
     lines.forEach(function(el,i){ el.dataset.id = 'line-'+i; });
     texts.forEach(function(el,i){ el.dataset.id = 'text-'+i; el.dataset.orig = el.textContent; });
     groups.forEach(function(el,i){ el.dataset.id = 'group-'+i; });
     wallRects.forEach(function(el,i){ el.dataset.id = 'wall-'+i; });
-    // doors already carry data-id from markup
+    // doors and windows already carry data-id from markup
 
-    // ---------- remove any texts the viewer deleted last visit ----------
+    // ---------- remove any texts/windows the viewer deleted last visit ----------
     (state.deletedTexts||[]).forEach(function(id){
       var el = texts.find(function(t){ return t.dataset.id === id; });
       if(el){ el.remove(); texts = texts.filter(function(t){ return t !== el; }); }
+    });
+    (state.deletedWindows||[]).forEach(function(id){
+      var el = windows.find(function(w){ return w.dataset.id === id; });
+      if(el){ el.remove(); windows = windows.filter(function(w){ return w !== el; }); }
     });
 
     // ---------- restore saved state ----------
@@ -926,6 +959,10 @@
     wallRects.forEach(function(el){
       var s = state.walls[el.dataset.id];
       if(s){ el.setAttribute('x',s.x); el.setAttribute('y',s.y); el.setAttribute('width',s.width); el.setAttribute('height',s.height); }
+    });
+    windows.forEach(function(el){
+      var s = state.windows[el.dataset.id];
+      if(s){ el.setAttribute('transform','translate('+s.tx+' '+s.ty+')'); }
     });
 
     // ---------- handles layer (drawn on top) ----------
@@ -1063,6 +1100,28 @@
       el.addEventListener('pointerdown', function(e){ startDrag(e, {type:'group', group:el}); });
     });
 
+    // ---------- windows: drag onto any wall, select + Delete to remove ----------
+    var selectedWindow = null;
+    function selectWindow(el){
+      if(selectedWindow) selectedWindow.classList.remove('window-selected');
+      selectedWindow = el;
+      if(el) el.classList.add('window-selected');
+    }
+    function registerWindow(el){
+      addTip(el, 'Drag to reposition this window · click then Delete to remove it');
+      el.addEventListener('pointerdown', function(e){ selectWindow(el); startDrag(e, {type:'group', group:el}); });
+    }
+    windows.forEach(registerWindow);
+    function removeWindow(el){
+      if(selectedWindow === el) selectedWindow = null;
+      if(el.dataset.custom !== '1'){
+        state.deletedWindows = state.deletedWindows || [];
+        if(state.deletedWindows.indexOf(el.dataset.id) === -1) state.deletedWindows.push(el.dataset.id);
+      }
+      windows = windows.filter(function(w){ return w !== el; });
+      el.remove();
+    }
+
     // ---------- inline text editor (HTML input overlaid on the SVG) ----------
     function openTextEditor(el){
       var box = el.getBoundingClientRect();
@@ -1113,6 +1172,11 @@
         removeText(selectedText);
         persistAll();
       }
+      if((e.key === 'Delete' || e.key === 'Backspace') && selectedWindow){
+        e.preventDefault();
+        removeWindow(selectedWindow);
+        persistAll();
+      }
     });
 
     addLabelBtn.addEventListener('click', function(){
@@ -1132,6 +1196,24 @@
       registerText(el);
       selectText(el);
       openTextEditor(el);
+    });
+
+    addWindowBtn.addEventListener('click', function(){
+      customCounter++;
+      var el = document.createElementNS('http://www.w3.org/2000/svg','g');
+      el.setAttribute('class','window-obj');
+      el.dataset.id = 'customwin-' + Date.now() + '-' + customCounter;
+      el.dataset.custom = '1';
+      el.setAttribute('transform','translate(300,900)');
+      el.innerHTML =
+        '<line class="win-erase" x1="0" y1="0" x2="90" y2="0" stroke="var(--fill-bed)" stroke-width="9"/>' +
+        '<line x1="9" y1="-4" x2="9" y2="4" stroke="var(--ink-soft)" stroke-width="2.5"/>' +
+        '<line x1="81" y1="-4" x2="81" y2="4" stroke="var(--ink-soft)" stroke-width="2.5"/>';
+      document.getElementById('windowsLayer').appendChild(el);
+      windows.push(el);
+      registerWindow(el);
+      selectWindow(el);
+      persistAll();
     });
 
     // ---------- drag engine ----------
@@ -1214,6 +1296,7 @@
     function persistAll(){
       var s = emptyState();
       s.deletedTexts = (state.deletedTexts || []).slice();
+      s.deletedWindows = (state.deletedWindows || []).slice();
       lines.forEach(function(el){
         s.lines[el.dataset.id] = {x1:el.x1.baseVal.value,y1:el.y1.baseVal.value,x2:el.x2.baseVal.value,y2:el.y2.baseVal.value};
       });
@@ -1244,11 +1327,21 @@
       wallPaths.forEach(function(el){
         s.walls[el.dataset.id] = {pts: wallPathPoints[el.dataset.id]};
       });
+      windows.forEach(function(el){
+        var tfm = el.getAttribute('transform');
+        var m = tfm && tfm.match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/);
+        var tx = m?parseFloat(m[1]):0, ty = m?parseFloat(m[2]):0;
+        if(el.dataset.custom === '1'){
+          s.customWindows.push({id: el.dataset.id, tx:tx, ty:ty, html: el.innerHTML});
+        } else {
+          s.windows[el.dataset.id] = {tx:tx, ty:ty};
+        }
+      });
       state = s;
       saveState(s);
     }
 
-    // ---------- rebuild custom texts saved from a previous visit ----------
+    // ---------- rebuild custom texts/windows saved from a previous visit ----------
     (state.customTexts||[]).forEach(function(rec){
       var el = document.createElementNS('http://www.w3.org/2000/svg','text');
       el.setAttribute('class','dim-text');
@@ -1262,6 +1355,17 @@
       document.getElementById('labelsLayer').appendChild(el);
       texts.push(el);
       registerText(el);
+    });
+    (state.customWindows||[]).forEach(function(rec){
+      var el = document.createElementNS('http://www.w3.org/2000/svg','g');
+      el.setAttribute('class','window-obj');
+      el.setAttribute('transform','translate('+rec.tx+' '+rec.ty+')');
+      el.dataset.id = rec.id;
+      el.dataset.custom = '1';
+      el.innerHTML = rec.html || '<line class="win-erase" x1="0" y1="0" x2="90" y2="0" stroke="var(--fill-bed)" stroke-width="9"/>';
+      document.getElementById('windowsLayer').appendChild(el);
+      windows.push(el);
+      registerWindow(el);
     });
 
     // ---------- doors: click to open/close, always active ----------
@@ -1298,10 +1402,11 @@
       editBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
       editBtn.textContent = on ? '✓ Editing — drag anything' : '✏️ Edit layout';
       addLabelBtn.style.display = on ? 'inline-flex' : 'none';
+      addWindowBtn.style.display = on ? 'inline-flex' : 'none';
       hint.textContent = on
         ? 'Drag anything, or grab a blue dot to resize a room. Scroll on a label to resize its text, double-click to rename it, select + Delete to remove it.'
         : 'Click any door to open/close it — always on.';
-      if(!on){ selectText(null); closeTextEditor(false); }
+      if(!on){ selectText(null); selectWindow(null); closeTextEditor(false); }
     }
     editBtn.addEventListener('click', function(){ setEditing(!editing); });
 
