@@ -371,7 +371,13 @@
     <div class="toolbar">
       <button class="tbtn" id="editToggle" type="button" aria-pressed="false" title="Turn on dragging for lines, labels, furniture and walls">✏️ Edit layout</button>
       <button class="tbtn ghost" id="addLabelBtn" type="button" style="display:none;" title="Create a new text label you can drag anywhere">+ Add label</button>
-      <button class="tbtn ghost" id="pdfBtn" type="button" title="Export the current plan (with your edits) as a PDF">⬇ Save as PDF</button>
+      <button class="tbtn ghost" id="pdfBtn" type="button" title="Download the current plan (with your edits) as a file">⬇ Download</button>
+      <select id="formatSelect" class="tbtn ghost" title="File format for the download">
+        <option value="png">PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="webp">WebP</option>
+        <option value="pdf">PDF</option>
+      </select>
       <button class="tbtn ghost" id="resetBtn" type="button" title="Discard all your edits and reload the original layout">Reset to default</button>
       <span class="tb-hint" id="tbHint">Click any door to open/close it — always on.</span>
       <span class="tb-status"><span class="tb-dot" id="saveDot"></span><span id="saveLabel"></span></span>
@@ -811,6 +817,7 @@
     var editBtn = document.getElementById('editToggle');
     var addLabelBtn = document.getElementById('addLabelBtn');
     var pdfBtn = document.getElementById('pdfBtn');
+    var formatSelect = document.getElementById('formatSelect');
     var resetBtn = document.getElementById('resetBtn');
     var hint = document.getElementById('tbHint');
     var saveDot = document.getElementById('saveDot');
@@ -1270,17 +1277,12 @@
       location.reload();
     });
 
-    // ---------- export as PDF (uses the downloads capability; never window.print()) ----------
-    pdfBtn.addEventListener('click', function(){
-      exportPDF();
-    });
-    function exportPDF(){
-      pdfBtn.disabled = true;
-      var origText = pdfBtn.textContent;
-      pdfBtn.textContent = 'Preparing…';
-      var wasEditing = editing;
-      if(wasEditing) setEditing(false);
-
+    // ---------- export: PNG / JPEG / WebP / PDF ----------
+    // Tries the `downloads` capability first (works only while this page is framed live
+    // inside a Claude conversation). Falls back to a plain browser download, which is
+    // blocked inside the claude.ai artifact sandbox but works normally on a page hosted
+    // anywhere else (e.g. the GitHub Pages copy of this same file).
+    function renderToCanvas(cb){
       var clone = svg.cloneNode(true);
       var hl = clone.querySelector('#handlesLayer');
       if(hl) hl.remove();
@@ -1291,61 +1293,89 @@
       var url = URL.createObjectURL(svgBlob);
       var img = new Image();
       img.onload = function(){
-        try{
-          var scale = 2;
-          var canvas = document.createElement('canvas');
-          canvas.width = vb.width * scale; canvas.height = vb.height * scale;
-          var ctx = canvas.getContext('2d');
-          ctx.fillStyle = '#f7f5f0';
-          ctx.fillRect(0,0,canvas.width,canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob(async function(pngBlob){
-            try{
-              var dataUrl = canvas.toDataURL('image/png');
-              var jsPDFCtor = (window.jspdf && window.jspdf.jsPDF);
-              if(!jsPDFCtor){ throw new Error('pdf library unavailable'); }
-              var pdf = new jsPDFCtor({
-                orientation: canvas.width > canvas.height ? 'l' : 'p',
-                unit: 'pt',
-                format: [canvas.width/scale, canvas.height/scale]
-              });
-              pdf.addImage(dataUrl, 'PNG', 0, 0, canvas.width/scale, canvas.height/scale);
-              var pdfBlob = pdf.output('blob');
-
-              var downloads = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null;
-              if(downloads){
-                try{
-                  await downloads.save({filename: 'floor-plan.pdf', data: pdfBlob});
-                  pdfBtn.textContent = '✓ Saved';
-                }catch(err){
-                  pdfBtn.textContent = (err && err.code === 'declined') ? origText : 'Save failed';
-                }
-              } else {
-                pdfBtn.textContent = 'Unavailable here';
-              }
-            }catch(err){
-              pdfBtn.textContent = 'Export failed';
-            }finally{
-              setTimeout(function(){ pdfBtn.textContent = origText; pdfBtn.disabled = false; }, 1800);
-              URL.revokeObjectURL(url);
-              if(wasEditing) setEditing(true);
-            }
-          }, 'image/png');
-        }catch(err){
-          pdfBtn.textContent = 'Export failed';
-          setTimeout(function(){ pdfBtn.textContent = origText; pdfBtn.disabled = false; }, 1800);
-          URL.revokeObjectURL(url);
-          if(wasEditing) setEditing(true);
-        }
-      };
-      img.onerror = function(){
-        pdfBtn.textContent = 'Export failed';
-        setTimeout(function(){ pdfBtn.textContent = origText; pdfBtn.disabled = false; }, 1800);
+        var scale = 2;
+        var canvas = document.createElement('canvas');
+        canvas.width = vb.width * scale; canvas.height = vb.height * scale;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#f7f5f0';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(url);
-        if(wasEditing) setEditing(true);
+        cb(null, canvas);
       };
+      img.onerror = function(){ URL.revokeObjectURL(url); cb(new Error('render failed')); };
       img.src = url;
     }
+
+    function plainDownload(blob, filename){
+      try{
+        var a = document.createElement('a');
+        var u = URL.createObjectURL(blob);
+        a.href = u; a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(u); }, 4000);
+      }catch(e){ /* inert inside the artifact sandbox — the capability path already tried */ }
+    }
+
+    async function exportFile(kind){
+      pdfBtn.disabled = true;
+      var origText = pdfBtn.textContent;
+      pdfBtn.textContent = 'Preparing…';
+      var wasEditing = editing;
+      if(wasEditing) setEditing(false);
+
+      renderToCanvas(async function(err, canvas){
+        if(err){
+          pdfBtn.textContent = 'Export failed';
+          setTimeout(function(){ pdfBtn.textContent = origText; pdfBtn.disabled = false; }, 1800);
+          if(wasEditing) setEditing(true);
+          return;
+        }
+        try{
+          var filename, blob, mime;
+          if(kind === 'pdf'){
+            var dataUrl = canvas.toDataURL('image/png');
+            var jsPDFCtor = (window.jspdf && window.jspdf.jsPDF);
+            if(!jsPDFCtor) throw new Error('pdf library unavailable');
+            var pdf = new jsPDFCtor({
+              orientation: canvas.width > canvas.height ? 'l' : 'p',
+              unit: 'pt',
+              format: [canvas.width/2, canvas.height/2]
+            });
+            pdf.addImage(dataUrl, 'PNG', 0, 0, canvas.width/2, canvas.height/2);
+            blob = pdf.output('blob');
+            filename = 'floor-plan.pdf';
+          } else {
+            mime = kind === 'jpeg' ? 'image/jpeg' : kind === 'webp' ? 'image/webp' : 'image/png';
+            blob = await new Promise(function(res){ canvas.toBlob(res, mime, 0.95); });
+            if(!blob) throw new Error('encode failed');
+            filename = 'floor-plan.' + kind;
+          }
+
+          var downloads = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null;
+          if(downloads){
+            try{
+              await downloads.save({filename: filename, data: blob});
+              pdfBtn.textContent = '✓ Saved';
+            }catch(saveErr){
+              if(saveErr && saveErr.code === 'declined'){ pdfBtn.textContent = origText; }
+              else { plainDownload(blob, filename); pdfBtn.textContent = '✓ Downloaded'; }
+            }
+          } else {
+            plainDownload(blob, filename);
+            pdfBtn.textContent = '✓ Downloaded';
+          }
+        }catch(e){
+          pdfBtn.textContent = 'Export failed';
+        }finally{
+          setTimeout(function(){ pdfBtn.textContent = origText; pdfBtn.disabled = false; }, 1800);
+          if(wasEditing) setEditing(true);
+        }
+      });
+    }
+    pdfBtn.addEventListener('click', function(){ exportFile(formatSelect.value); });
 
     setEditing(false);
   })();
