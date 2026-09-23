@@ -133,6 +133,7 @@
     box-shadow: var(--shadow);
     padding: 18px;
     margin-top: 20px;
+    position: relative;
   }
 
   .plate svg{
@@ -140,7 +141,88 @@
     height: auto;
     display:block;
     font-family: 'Inter', sans-serif;
+    touch-action: none;
   }
+
+  .toolbar{
+    display:flex;
+    align-items:center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .tbtn{
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+    background: var(--paper);
+    color: var(--ink);
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    display:flex;
+    align-items:center;
+    gap: 6px;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .tbtn:hover{ border-color: var(--ink); }
+  .tbtn.active{
+    background: var(--ink);
+    color: var(--card);
+    border-color: var(--ink);
+  }
+  .tbtn.ghost{ background: transparent; }
+  .tb-hint{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  .tb-status{
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-left: auto;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .tb-dot{
+    width:6px; height:6px; border-radius:50%;
+    background: color-mix(in srgb, var(--green) 70%, var(--ink-soft));
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .tb-dot.show{ opacity: 1; }
+
+  /* ---- door interactions: always clickable ---- */
+  .door{ cursor: pointer; }
+  .door .door-closer{ display: none; }
+  .door.closed .door-closer{ display: inline; }
+  .door.closed .door-swing{ display: none; }
+  .door:hover .door-erase{ filter: brightness(1.05); }
+
+  /* ---- edit-mode drag affordances (inert until .editing is set on the svg) ---- */
+  #floorplanSvg .dim-line,
+  #floorplanSvg .dim-text,
+  #floorplanSvg .drag-group{ pointer-events: none; }
+  #floorplanSvg.editing .dim-line{ pointer-events: stroke; cursor: move; }
+  #floorplanSvg.editing .dim-text{ pointer-events: all; cursor: move; }
+  #floorplanSvg.editing .drag-group{ pointer-events: visiblePainted; cursor: move; }
+  #floorplanSvg.editing .drag-group *{ pointer-events: visiblePainted; }
+  #floorplanSvg.editing .dim-text:hover,
+  #floorplanSvg.editing .drag-group:hover{
+    outline: none;
+  }
+  .drag-handle{
+    fill: var(--red);
+    stroke: var(--card);
+    stroke-width: 2;
+    r: 8;
+    opacity: 0;
+    pointer-events: none;
+    cursor: grab;
+  }
+  #floorplanSvg.editing .drag-handle{ opacity: .9; pointer-events: all; }
+  .drag-handle:active{ cursor: grabbing; }
 
   .legend{
     display:flex;
@@ -238,11 +320,17 @@
   <header>
     <p class="eyebrow">Traced from hand sketch · shapes + dimensions verified against zoomed source photo</p>
     <h1>Apartment Floor Plan</h1>
-    <p class="sub">Digital redraw of the pencil-and-marker sketch. Every room outline, corridor, the stepped entry foyer, the L-shaped Salón, and the irregular stairwell shaft are traced to match the original shapes — not simplified into plain boxes — with every dimension label carried over exactly as marked.</p>
+    <p class="sub">Digital redraw of the pencil-and-marker sketch. Every room outline, corridor, the stepped entry foyer, the L-shaped Salón, and the irregular stairwell shaft are traced to match the original shapes — not simplified into plain boxes — with every dimension label carried over exactly as marked. Click "Edit layout" below to drag any dimension line, label, or furniture piece; click any door to open or close it. Edits save automatically in this browser and reload next time you open this page.</p>
   </header>
 
   <div class="plate">
-    <svg viewBox="0 0 1500 2010" xmlns="http://www.w3.org/2000/svg">
+    <div class="toolbar">
+      <button class="tbtn" id="editToggle" type="button" aria-pressed="false">✏️ Edit layout</button>
+      <button class="tbtn ghost" id="resetBtn" type="button">Reset to default</button>
+      <span class="tb-hint" id="tbHint">Click any door to open/close it — always on.</span>
+      <span class="tb-status"><span class="tb-dot" id="saveDot"></span><span id="saveLabel"></span></span>
+    </div>
+    <svg id="floorplanSvg" viewBox="0 0 1500 2010" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <pattern id="hatch" width="14" height="14" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
           <line x1="0" y1="0" x2="0" y2="14" stroke="var(--gold)" stroke-width="3" opacity=".55"/>
@@ -326,71 +414,123 @@
         <rect x="615" y="1241" width="16" height="16" fill="var(--red)"/>
       </g>
 
-      <!-- ================= DOOR OPENINGS: erase the wall + swing arc + leaf ================= -->
-      <g>
-        <!-- Room A -> corridor (bottom wall) -->
-        <line x1="478" y1="595" x2="562" y2="595" stroke="var(--fill-bed)" stroke-width="12"/>
-        <path d="M478,595 L478,675" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
-        <path d="M478,675 A80,80 0 0 1 558,595" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+      <!-- ================= DOOR OPENINGS: click any door to open/close it ================= -->
+      <!-- each .door has an .door-erase (the gap), .door-swing (arc+leaf, hidden when closed) -->
+      <!-- and a .door-closer (solid wall segment, shown only when closed) -->
+      <g class="doors">
+        <g class="door" data-id="doorA">
+          <line class="door-erase" x1="478" y1="595" x2="562" y2="595" stroke="var(--fill-bed)" stroke-width="12"/>
+          <line class="door-closer" x1="478" y1="595" x2="562" y2="595" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M478,595 L478,675" stroke-width="2"/>
+            <path d="M478,675 A80,80 0 0 1 558,595" stroke-width="1.5" opacity=".7"/>
+          </g>
+        </g>
 
-        <!-- Room B -> corridor (right wall) -->
-        <line x1="505" y1="680" x2="505" y2="750" stroke="var(--fill-circ)" stroke-width="12"/>
-        <path d="M505,680 L435,680" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
-        <path d="M435,680 A70,70 0 0 1 505,750" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <g class="door" data-id="doorB">
+          <line class="door-erase" x1="505" y1="680" x2="505" y2="750" stroke="var(--fill-circ)" stroke-width="12"/>
+          <line class="door-closer" x1="505" y1="680" x2="505" y2="750" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M505,680 L435,680" stroke-width="2"/>
+            <path d="M435,680 A70,70 0 0 1 505,750" stroke-width="1.5" opacity=".7"/>
+          </g>
+        </g>
 
-        <!-- Room C -> corridor (right wall) -->
-        <line x1="505" y1="1055" x2="505" y2="1125" stroke="var(--fill-circ)" stroke-width="12"/>
-        <path d="M505,1055 L435,1055" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
-        <path d="M435,1055 A70,70 0 0 1 505,1125" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <g class="door" data-id="doorC">
+          <line class="door-erase" x1="505" y1="1055" x2="505" y2="1125" stroke="var(--fill-circ)" stroke-width="12"/>
+          <line class="door-closer" x1="505" y1="1055" x2="505" y2="1125" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M505,1055 L435,1055" stroke-width="2"/>
+            <path d="M435,1055 A70,70 0 0 1 505,1125" stroke-width="1.5" opacity=".7"/>
+          </g>
+        </g>
 
-        <!-- Room D -> corridor (top wall, right portion) -->
-        <line x1="520" y1="1440" x2="590" y2="1440" stroke="var(--fill-circ)" stroke-width="12"/>
-        <path d="M520,1440 L520,1510" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
-        <path d="M520,1510 A70,70 0 0 1 590,1440" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <g class="door" data-id="doorD1">
+          <line class="door-erase" x1="520" y1="1440" x2="590" y2="1440" stroke="var(--fill-circ)" stroke-width="12"/>
+          <line class="door-closer" x1="520" y1="1440" x2="590" y2="1440" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M520,1440 L520,1510" stroke-width="2"/>
+            <path d="M520,1510 A70,70 0 0 1 590,1440" stroke-width="1.5" opacity=".7"/>
+          </g>
+        </g>
 
-        <!-- Room D -> entry foyer -->
-        <line x1="500" y1="1720" x2="570" y2="1720" stroke="var(--fill-foyer)" stroke-width="12"/>
-        <path d="M500,1720 L500,1650" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
-        <path d="M500,1650 A70,70 0 0 1 570,1720" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <g class="door" data-id="doorD2">
+          <line class="door-erase" x1="500" y1="1720" x2="570" y2="1720" stroke="var(--fill-foyer)" stroke-width="12"/>
+          <line class="door-closer" x1="500" y1="1720" x2="570" y2="1720" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M500,1720 L500,1650" stroke-width="2"/>
+            <path d="M500,1650 A70,70 0 0 1 570,1720" stroke-width="1.5" opacity=".7"/>
+          </g>
+        </g>
 
-        <!-- blue landing room -> stairwell (bottom wall) -->
-        <line x1="800" y1="460" x2="862" y2="460" stroke="var(--fill-stair)" stroke-width="12"/>
-        <path d="M855,460 A55,55 0 0 0 810,405" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
-        <path d="M855,460 L855,405" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <g class="door" data-id="doorStorage">
+          <line class="door-erase" x1="800" y1="460" x2="862" y2="460" stroke="var(--fill-stair)" stroke-width="12"/>
+          <line class="door-closer" x1="800" y1="460" x2="862" y2="460" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M855,460 A55,55 0 0 0 810,405" stroke-width="1.5" opacity=".7"/>
+            <path d="M855,460 L855,405" stroke-width="2"/>
+          </g>
+        </g>
 
-        <!-- Room E -> corridor (left wall) -->
-        <line x1="880" y1="350" x2="880" y2="420" stroke="var(--fill-circ)" stroke-width="12"/>
-        <path d="M880,420 L950,420" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
-        <path d="M950,420 A70,70 0 0 1 880,350" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <g class="door" data-id="doorE">
+          <line class="door-erase" x1="880" y1="350" x2="880" y2="420" stroke="var(--fill-circ)" stroke-width="12"/>
+          <line class="door-closer" x1="880" y1="350" x2="880" y2="420" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M880,420 L950,420" stroke-width="2"/>
+            <path d="M950,420 A70,70 0 0 1 880,350" stroke-width="1.5" opacity=".7"/>
+          </g>
+        </g>
 
-        <!-- Room F -> corridor (left wall) -->
-        <line x1="955" y1="690" x2="955" y2="760" stroke="var(--fill-circ)" stroke-width="12"/>
-        <path d="M955,760 L1025,760" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
-        <path d="M1025,760 A70,70 0 0 1 955,690" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <g class="door" data-id="doorF">
+          <line class="door-erase" x1="955" y1="690" x2="955" y2="760" stroke="var(--fill-circ)" stroke-width="12"/>
+          <line class="door-closer" x1="955" y1="690" x2="955" y2="760" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M955,760 L1025,760" stroke-width="2"/>
+            <path d="M1025,760 A70,70 0 0 1 955,690" stroke-width="1.5" opacity=".7"/>
+          </g>
+        </g>
 
-        <!-- Kitchen open to Salon: wide pass-through -->
-        <line x1="1000" y1="1230" x2="1120" y2="1230" stroke="var(--fill-kitchen)" stroke-width="12"/>
-        <line x1="1000" y1="1230" x2="1120" y2="1230" stroke="var(--fill-living)" stroke-width="4" stroke-dasharray="2 6" opacity=".5"/>
+        <g class="door" data-id="doorKitchen">
+          <line class="door-erase" x1="1000" y1="1230" x2="1120" y2="1230" stroke="var(--fill-kitchen)" stroke-width="12"/>
+          <line class="door-closer" x1="1000" y1="1230" x2="1120" y2="1230" stroke="var(--wall)" stroke-width="9"/>
+          <line class="door-swing" x1="1000" y1="1230" x2="1120" y2="1230" stroke="var(--fill-living)" stroke-width="4" stroke-dasharray="2 6" opacity=".5"/>
+        </g>
 
-        <!-- Foyer <-> Salon -->
-        <line x1="760" y1="1655" x2="840" y2="1655" stroke="var(--fill-foyer)" stroke-width="12"/>
-        <path d="M760,1655 L760,1585" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
-        <path d="M760,1585 A70,70 0 0 1 830,1655" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <g class="door" data-id="doorFoyerSalon">
+          <line class="door-erase" x1="760" y1="1655" x2="840" y2="1655" stroke="var(--fill-foyer)" stroke-width="12"/>
+          <line class="door-closer" x1="760" y1="1655" x2="840" y2="1655" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M760,1655 L760,1585" stroke-width="2"/>
+            <path d="M760,1585 A70,70 0 0 1 830,1655" stroke-width="1.5" opacity=".7"/>
+          </g>
+        </g>
 
-        <!-- Lift: sliding door mark on the corridor-facing wall -->
-        <line x1="880" y1="1070" x2="880" y2="1130" stroke="var(--fill-circ)" stroke-width="12"/>
-        <line x1="875" y1="1070" x2="875" y2="1130" stroke="var(--ink-soft)" stroke-width="2"/>
-        <line x1="885" y1="1070" x2="885" y2="1130" stroke="var(--ink-soft)" stroke-width="2"/>
+        <g class="door" data-id="doorLift">
+          <line class="door-erase" x1="880" y1="1070" x2="880" y2="1130" stroke="var(--fill-circ)" stroke-width="12"/>
+          <line class="door-closer" x1="880" y1="1070" x2="880" y2="1130" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" stroke="var(--ink-soft)">
+            <line x1="875" y1="1070" x2="875" y2="1130" stroke-width="2"/>
+            <line x1="885" y1="1070" x2="885" y2="1130" stroke-width="2"/>
+          </g>
+        </g>
 
-        <!-- Salon front door (bottom wall) -->
-        <line x1="805" y1="1985" x2="895" y2="1985" stroke="var(--fill-living)" stroke-width="12"/>
-        <path d="M895,1985 A90,90 0 0 0 805,1895" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
-        <path d="M895,1985 L895,1895" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <g class="door" data-id="doorSalonFront">
+          <line class="door-erase" x1="805" y1="1985" x2="895" y2="1985" stroke="var(--fill-living)" stroke-width="12"/>
+          <line class="door-closer" x1="805" y1="1985" x2="895" y2="1985" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M895,1985 A90,90 0 0 0 805,1895" stroke-width="1.5" opacity=".7"/>
+            <path d="M895,1985 L895,1895" stroke-width="2"/>
+          </g>
+        </g>
 
-        <!-- Salon second door (right wall) -->
-        <line x1="1245" y1="1780" x2="1245" y2="1860" stroke="var(--fill-living)" stroke-width="12"/>
-        <path d="M1245,1780 A80,80 0 0 1 1165,1860" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
-        <path d="M1245,1780 L1165,1780" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <g class="door" data-id="doorSalonSide">
+          <line class="door-erase" x1="1245" y1="1780" x2="1245" y2="1860" stroke="var(--fill-living)" stroke-width="12"/>
+          <line class="door-closer" x1="1245" y1="1780" x2="1245" y2="1860" stroke="var(--wall)" stroke-width="9"/>
+          <g class="door-swing" fill="none" stroke="var(--ink-soft)">
+            <path d="M1245,1780 A80,80 0 0 1 1165,1860" stroke-width="1.5" opacity=".7"/>
+            <path d="M1245,1780 L1165,1780" stroke-width="2"/>
+          </g>
+        </g>
       </g>
 
       <!-- ================= WINDOWS: gap + double tick on exterior walls ================= -->
@@ -417,23 +557,23 @@
         <rect x="750" y="470" width="126" height="480" fill="url(#hatch)"/>
       </g>
 
-      <!-- ================= ROOM A ICONS (sloped soffit + built-in wardrobe + door + bed) ================= -->
-      <g stroke="var(--ink)" stroke-width="2" fill="none">
+      <!-- ================= FURNITURE (draggable as whole pieces in edit mode) ================= -->
+      <g id="furnLayer">
+      <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
         <path d="M120,220 L175,192 L175,244" opacity=".7"/>
         <rect x="175" y="192" width="216" height="52" opacity=".8"/>
         <line x1="247" y1="192" x2="247" y2="244"/>
         <line x1="319" y1="192" x2="319" y2="244"/>
-        <path d="M560,595 A80,80 0 0 0 480,675" opacity=".6"/>
       </g>
-      <use href="#bedIcon" x="115" y="280" width="150" height="230"/>
-      <use href="#nightstand" x="115" y="510" width="42" height="42"/>
+      <use class="drag-group" href="#bedIcon" x="115" y="280" width="150" height="230"/>
+      <use class="drag-group" href="#nightstand" x="115" y="510" width="42" height="42"/>
 
       <!-- ROOM B: bed against the left wall -->
-      <use href="#bedIcon" x="115" y="630" width="150" height="195"/>
-      <use href="#nightstand" x="115" y="828" width="38" height="38"/>
+      <use class="drag-group" href="#bedIcon" x="115" y="630" width="150" height="195"/>
+      <use class="drag-group" href="#nightstand" x="115" y="828" width="38" height="38"/>
 
       <!-- ROOM C: two dividing rails + built-in wardrobe at bottom + bed in the top band -->
-      <g stroke="var(--ink)" stroke-width="2" fill="none">
+      <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
         <line x1="95" y1="965" x2="495" y2="965" opacity=".7"/>
         <line x1="95" y1="1195" x2="495" y2="1195" opacity=".7"/>
         <circle cx="230" cy="1080" r="4" fill="var(--ink)"/>
@@ -443,36 +583,35 @@
         <rect x="300" y="1390" width="95" height="34"/>
         <line x1="347" y1="1390" x2="347" y2="1424"/>
       </g>
-      <use href="#bedIcon" x="140" y="895" width="150" height="195"/>
+      <use class="drag-group" href="#bedIcon" x="140" y="895" width="150" height="195"/>
 
       <!-- ROOM D: wardrobe/desk + bed -->
-      <g stroke="var(--ink)" stroke-width="2" fill="none">
+      <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
         <rect x="95" y="1468" width="220" height="80" opacity=".8"/>
         <line x1="95" y1="1490" x2="315" y2="1490" opacity=".6"/>
         <rect x="95" y="1615" width="62" height="42"/>
         <line x1="95" y1="1657" x2="130" y2="1690"/>
       </g>
-      <use href="#bedIcon" x="360" y="1485" width="130" height="185"/>
+      <use class="drag-group" href="#bedIcon" x="360" y="1485" width="130" height="185"/>
 
       <!-- LIFT car -->
-      <g stroke="var(--ink)" stroke-width="2" fill="none" opacity=".75">
+      <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none" opacity=".75">
         <rect x="665" y="1030" width="150" height="170"/>
         <line x1="665" y1="1030" x2="815" y2="1200"/>
         <line x1="815" y1="1030" x2="665" y2="1200"/>
       </g>
 
-      <!-- BLUE landing room: floor fixture + door swing -->
-      <g stroke="var(--ink)" stroke-width="2" fill="none">
+      <!-- BLUE landing room: floor fixture -->
+      <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
         <rect x="830" y="420" width="26" height="18" opacity=".7"/>
-        <path d="M855,460 A55,55 0 0 0 810,405" opacity=".6"/>
       </g>
 
       <!-- ROOM E: bed against left wall -->
-      <use href="#bedIcon" x="915" y="380" width="150" height="200"/>
-      <use href="#nightstand" x="915" y="580" width="38" height="38"/>
+      <use class="drag-group" href="#bedIcon" x="915" y="380" width="150" height="200"/>
+      <use class="drag-group" href="#nightstand" x="915" y="580" width="38" height="38"/>
 
       <!-- ROOM F bathroom fixtures: 2 wall cabinets w/ knobs, basin+faucet, oval mirror over a stand -->
-      <g stroke="var(--ink)" stroke-width="2" fill="none">
+      <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
         <rect x="985" y="630" width="80" height="50"/>
         <circle cx="1025" cy="655" r="4" fill="var(--ink)"/>
         <rect x="1090" y="630" width="80" height="50"/>
@@ -484,8 +623,8 @@
         <ellipse cx="1167" cy="800" rx="32" ry="42"/>
       </g>
 
-      <!-- KITCHEN: FRIGO/HORNO MICRO labels over counter, stove w/ 3 burners, sink, small fixture at right wall -->
-      <g stroke="var(--ink)" stroke-width="2" fill="none">
+      <!-- KITCHEN: fridge/oven boxes, stove w/ 3 burners, sink, small fixture at right wall -->
+      <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
         <rect x="970" y="950" width="80" height="34"/>
         <rect x="1060" y="950" width="90" height="34"/>
         <rect x="990" y="1000" width="70" height="150"/>
@@ -500,136 +639,353 @@
         <circle cx="1192" cy="1102" r="6" fill="var(--ink)"/>
       </g>
 
-      <!-- SALON: small sofa/console kept exactly where the sketch drew it, plus door arcs -->
-      <g stroke="var(--ink)" stroke-width="2" fill="none">
+      <!-- SALON: small sofa/console kept exactly where the sketch drew it -->
+      <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
         <!-- sofa in its original nook: backrest + two seat cushions -->
         <path d="M850,1420 L920,1420 L920,1525 L850,1525 L850,1420" opacity=".85"/>
         <line x1="850" y1="1420" x2="920" y2="1420" stroke-width="4" opacity=".85"/>
         <line x1="850" y1="1470" x2="920" y2="1470" opacity=".5"/>
-
-        <path d="M895,1985 A90,90 0 0 0 805,1895" opacity=".6"/>
-        <path d="M1245,1780 A80,80 0 0 1 1165,1860" opacity=".6"/>
       </g>
 
       <!-- entrance arrow: points right, into the corridor -->
-      <line x1="805" y1="905" x2="858" y2="905" stroke="var(--red)" stroke-width="5" marker-end="url(#bigArrow)"/>
+      <line class="drag-group" x1="805" y1="905" x2="858" y2="905" stroke="var(--red)" stroke-width="5" marker-end="url(#bigArrow)"/>
+      </g>
 
-      <!-- ================= ROOM NAME LABELS (clean sans) ================= -->
-      <g fill="var(--ink)" font-family="'Inter',sans-serif" text-anchor="middle">
-        <text x="345" y="440" font-size="22" font-weight="600">Bedroom</text>
-        <text x="290" y="740" font-size="22" font-weight="600">Bedroom</text>
-        <text x="290" y="1050" font-size="22" font-weight="600">Bedroom</text>
-        <text x="220" y="1690" font-size="22" font-weight="600">Bedroom</text>
-        <text x="280" y="1900" font-size="18" font-weight="600" opacity=".8">Foyer</text>
-        <text x="550" y="1010" font-size="16" font-weight="600" opacity=".7" transform="rotate(-90 550 1010)">Corridor</text>
-        <text x="742" y="690" font-size="16" font-weight="600" opacity=".8" transform="rotate(-90 742 690)">Stairs</text>
-        <text x="785" y="395" font-size="15" font-weight="600" opacity=".8">Storage</text>
-        <text x="742" y="1145" font-size="22" font-weight="600">Lift</text>
-        <text x="915" y="900" font-size="15" font-weight="600" opacity=".7" transform="rotate(-90 915 900)">Corridor</text>
-        <text x="1060" y="440" font-size="22" font-weight="600">Bedroom</text>
-        <text x="1100" y="710" font-size="19" font-weight="600">Bathroom</text>
-        <text x="1100" y="1110" font-size="20" font-weight="600">Kitchen</text>
-        <text x="1030" y="1300" font-size="24" font-weight="600">Salón</text>
+      <!-- ================= ROOM NAME LABELS (clean sans, draggable) ================= -->
+      <g id="labelsLayer" fill="var(--ink)" font-family="'Inter',sans-serif" text-anchor="middle">
+        <text class="dim-text" x="345" y="440" font-size="22" font-weight="600">Bedroom</text>
+        <text class="dim-text" x="290" y="740" font-size="22" font-weight="600">Bedroom</text>
+        <text class="dim-text" x="290" y="1050" font-size="22" font-weight="600">Bedroom</text>
+        <text class="dim-text" x="220" y="1690" font-size="22" font-weight="600">Bedroom</text>
+        <text class="dim-text" x="280" y="1900" font-size="18" font-weight="600" opacity=".8">Foyer</text>
+        <text class="dim-text" x="550" y="1010" font-size="16" font-weight="600" opacity=".7" transform="rotate(-90 550 1010)">Corridor</text>
+        <text class="dim-text" x="742" y="690" font-size="16" font-weight="600" opacity=".8" transform="rotate(-90 742 690)">Stairs</text>
+        <text class="dim-text" x="785" y="395" font-size="15" font-weight="600" opacity=".8">Storage</text>
+        <text class="dim-text" x="742" y="1145" font-size="22" font-weight="600">Lift</text>
+        <text class="dim-text" x="915" y="900" font-size="15" font-weight="600" opacity=".7" transform="rotate(-90 915 900)">Corridor</text>
+        <text class="dim-text" x="1060" y="440" font-size="22" font-weight="600">Bedroom</text>
+        <text class="dim-text" x="1100" y="710" font-size="19" font-weight="600">Bathroom</text>
+        <text class="dim-text" x="1100" y="1110" font-size="20" font-weight="600">Kitchen</text>
+        <text class="dim-text" x="1030" y="1300" font-size="24" font-weight="600">Salón</text>
       </g>
 
       <!-- ================= FIXTURE LABELS ================= -->
       <g fill="var(--ink)" font-size="30">
-        <text x="1000" y="945" text-anchor="middle" font-size="15" font-family="'IBM Plex Mono',monospace">FRIGO</text>
-        <text x="1105" y="945" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace">HORNO</text>
-        <text x="1105" y="958" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace">MICRO</text>
+        <text class="dim-text" x="1000" y="945" text-anchor="middle" font-size="15" font-family="'IBM Plex Mono',monospace">FRIGO</text>
+        <text class="dim-text" x="1105" y="945" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace">HORNO</text>
+        <text class="dim-text" x="1105" y="958" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace">MICRO</text>
       </g>
 
       <!-- ================= DIMENSIONS: every label inset inside the one room it measures, ================= -->
-      <!-- ================= with its own arrow line, and a light halo so it reads over any fill  ================= -->
-      <g fill="var(--ink)" font-size="19" font-weight="600" font-family="'Inter',sans-serif" text-anchor="middle"
+      <!-- ================= draggable in edit mode — each line's ends and each label can be moved ================= -->
+      <g id="dimsLayer" fill="var(--ink)" font-size="19" font-weight="600" font-family="'Inter',sans-serif" text-anchor="middle"
          stroke="var(--card)" stroke-width="4" paint-order="stroke" stroke-linejoin="round">
 
         <!-- Room A: 3.4 x 3.0 -->
-        <line x1="130" y1="565" x2="570" y2="565" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="350" y="556">3.4m</text>
-        <line x1="578" y1="205" x2="578" y2="580" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="578" y="398" transform="rotate(-90 578 398)">3m</text>
+        <line class="dim-line" x1="130" y1="565" x2="570" y2="565" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="350" y="556">3.4m</text>
+        <line class="dim-line" x1="578" y1="205" x2="578" y2="580" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="578" y="398" transform="rotate(-90 578 398)">3m</text>
 
         <!-- Room B: 2.7 x 3.0 -->
-        <line x1="130" y1="620" x2="460" y2="620" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="295" y="611">2.7m</text>
-        <line x1="478" y1="618" x2="478" y2="850" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="478" y="738" transform="rotate(-90 478 738)">3m</text>
+        <line class="dim-line" x1="130" y1="620" x2="460" y2="620" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="295" y="611">2.7m</text>
+        <line class="dim-line" x1="478" y1="618" x2="478" y2="850" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="478" y="738" transform="rotate(-90 478 738)">3m</text>
 
         <!-- Room C: 2.7 x 4.5 -->
-        <line x1="120" y1="905" x2="430" y2="905" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="275" y="896">2.7m</text>
-        <line x1="473" y1="895" x2="473" y2="1420" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="473" y="1162" transform="rotate(-90 473 1162)">4.5m</text>
+        <line class="dim-line" x1="120" y1="905" x2="430" y2="905" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="275" y="896">2.7m</text>
+        <line class="dim-line" x1="473" y1="895" x2="473" y2="1420" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="473" y="1162" transform="rotate(-90 473 1162)">4.5m</text>
 
         <!-- Room D: 3.1 x 3.2 -->
-        <line x1="110" y1="1696" x2="555" y2="1696" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="330" y="1687">3.1m</text>
-        <line x1="562" y1="1460" x2="562" y2="1700" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="562" y="1584" transform="rotate(-90 562 1584)">3.2m</text>
+        <line class="dim-line" x1="110" y1="1696" x2="555" y2="1696" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="330" y="1687">3.1m</text>
+        <line class="dim-line" x1="562" y1="1460" x2="562" y2="1700" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="562" y="1584" transform="rotate(-90 562 1584)">3.2m</text>
 
         <!-- Foyer: 1.5 tall (left, under D) -->
-        <line x1="112" y1="1740" x2="112" y2="1975" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="112" y="1862" transform="rotate(-90 112 1862)">1.5m</text>
+        <line class="dim-line" x1="112" y1="1740" x2="112" y2="1975" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="112" y="1862" transform="rotate(-90 112 1862)">1.5m</text>
         <!-- Foyer: 3.2 tall (right, tall step) -->
-        <line x1="870" y1="1672" x2="870" y2="1975" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="870" y="1828" transform="rotate(-90 870 1828)">3.2m</text>
+        <line class="dim-line" x1="870" y1="1672" x2="870" y2="1975" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="870" y="1828" transform="rotate(-90 870 1828)">3.2m</text>
         <!-- Foyer: 6.1 bottom width -->
-        <line x1="90" y1="1966" x2="880" y2="1966" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="480" y="1957">6.1m</text>
+        <line class="dim-line" x1="90" y1="1966" x2="880" y2="1966" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="480" y="1957">6.1m</text>
 
         <!-- Corridor (left): 1.0 x 6.7 -->
-        <line x1="520" y1="655" x2="580" y2="655" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="550" y="646">1m</text>
-        <line x1="550" y1="690" x2="550" y2="1425" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="550" y="1058" transform="rotate(-90 550 1058)">6.7m</text>
+        <line class="dim-line" x1="520" y1="655" x2="580" y2="655" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="550" y="646">1m</text>
+        <line class="dim-line" x1="550" y1="690" x2="550" y2="1425" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="550" y="1058" transform="rotate(-90 550 1058)">6.7m</text>
 
         <!-- Storage (blue, off landing): 2.0 x 2.0 -->
-        <line x1="708" y1="240" x2="862" y2="240" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="785" y="231">2m</text>
-        <line x1="708" y1="252" x2="708" y2="452" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="708" y="352" transform="rotate(-90 708 352)">2m</text>
+        <line class="dim-line" x1="708" y1="240" x2="862" y2="240" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="785" y="231">2m</text>
+        <line class="dim-line" x1="708" y1="252" x2="708" y2="452" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="708" y="352" transform="rotate(-90 708 352)">2m</text>
 
         <!-- Corridor (right): 1.2 wide -->
-        <line x1="895" y1="700" x2="935" y2="700" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="915" y="691">1.2m</text>
+        <line class="dim-line" x1="895" y1="700" x2="935" y2="700" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="915" y="691">1.2m</text>
 
         <!-- Room E: 3.2 x 3.4 -->
-        <line x1="905" y1="255" x2="1220" y2="255" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1062" y="246">3.2m</text>
-        <line x1="1198" y1="250" x2="1198" y2="595" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1198" y="422" transform="rotate(-90 1198 422)">3.4m</text>
+        <line class="dim-line" x1="905" y1="255" x2="1220" y2="255" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="1062" y="246">3.2m</text>
+        <line class="dim-line" x1="1198" y1="250" x2="1198" y2="595" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="1198" y="422" transform="rotate(-90 1198 422)">3.4m</text>
 
         <!-- Room F: 2.2 x 2.0 -->
-        <line x1="975" y1="895" x2="1220" y2="895" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1097" y="886">2.2m</text>
-        <line x1="1213" y1="635" x2="1213" y2="895" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1213" y="765" transform="rotate(-90 1213 765)">2m</text>
+        <line class="dim-line" x1="975" y1="895" x2="1220" y2="895" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="1097" y="886">2.2m</text>
+        <line class="dim-line" x1="1213" y1="635" x2="1213" y2="895" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="1213" y="765" transform="rotate(-90 1213 765)">2m</text>
 
         <!-- Kitchen: 2.5 wide x 3.0 -->
-        <line x1="1000" y1="1002" x2="1150" y2="1002" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1075" y="993">2.5m</text>
-        <line x1="1230" y1="1000" x2="1230" y2="1200" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1230" y="1100" transform="rotate(-90 1230 1100)">3m</text>
+        <line class="dim-line" x1="1000" y1="1002" x2="1150" y2="1002" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="1075" y="993">2.5m</text>
+        <line class="dim-line" x1="1230" y1="1000" x2="1230" y2="1200" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="1230" y="1100" transform="rotate(-90 1230 1100)">3m</text>
 
         <!-- Salon: 6.3 top width -->
-        <line x1="625" y1="1268" x2="1222" y2="1268" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="925" y="1259">6.3m</text>
+        <line class="dim-line" x1="625" y1="1268" x2="1222" y2="1268" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="925" y="1259">6.3m</text>
         <!-- Salon: 6.6 right height -->
-        <line x1="1222" y1="1275" x2="1222" y2="1960" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="1222" y="1618" transform="rotate(-90 1222 1618)">6.6m</text>
+        <line class="dim-line" x1="1222" y1="1275" x2="1222" y2="1960" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="1222" y="1618" transform="rotate(-90 1222 1618)">6.6m</text>
         <!-- Salon: 4.2 notch height -->
-        <line x1="625" y1="1252" x2="625" y2="1650" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="625" y="1451" transform="rotate(-90 625 1451)">4.2m</text>
-        <!-- Salon: 2.5 notch width (just below the step line) -->
-        <line x1="612" y1="1672" x2="748" y2="1672" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="680" y="1663">2.5m</text>
+        <line class="dim-line" x1="625" y1="1252" x2="625" y2="1560" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="625" y="1406" transform="rotate(-90 625 1406)">4.2m</text>
+        <!-- Salon: 2.5 notch width (kept well above the door-arc riser at x=760) -->
+        <line class="dim-line" x1="640" y1="1550" x2="880" y2="1550" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="760" y="1541">2.5m</text>
         <!-- Salon: 4.6 sofa alcove height -->
-        <line x1="940" y1="1422" x2="940" y2="1523" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-        <text x="940" y="1472" transform="rotate(-90 940 1472)">4.6m</text>
+        <line class="dim-line" x1="940" y1="1422" x2="940" y2="1523" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+        <text class="dim-text" x="940" y="1472" transform="rotate(-90 940 1472)">4.6m</text>
       </g>
     </svg>
   </div>
+
+  <script>
+  (function(){
+    var STORAGE_KEY = 'floorplan_edits_v1';
+    var svg = document.getElementById('floorplanSvg');
+    var editBtn = document.getElementById('editToggle');
+    var resetBtn = document.getElementById('resetBtn');
+    var hint = document.getElementById('tbHint');
+    var saveDot = document.getElementById('saveDot');
+    var saveLabel = document.getElementById('saveLabel');
+    var editing = false;
+    var saveTimer = null;
+
+    function svgPoint(evt){
+      var pt = svg.createSVGPoint();
+      pt.x = evt.clientX; pt.y = evt.clientY;
+      var ctm = svg.getScreenCTM();
+      if(!ctm) return {x:0,y:0};
+      var p = pt.matrixTransform(ctm.inverse());
+      return {x:p.x, y:p.y};
+    }
+
+    function loadState(){
+      try{
+        var raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {lines:{},texts:{},groups:{},doors:{}};
+      }catch(e){ return {lines:{},texts:{},groups:{},doors:{}}; }
+    }
+    function saveState(state){
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        flashSaved();
+      }catch(e){ /* storage unavailable, edits still work this session */ }
+    }
+    function flashSaved(){
+      saveDot.classList.add('show');
+      saveLabel.textContent = 'Saved';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function(){ saveDot.classList.remove('show'); }, 1200);
+    }
+
+    var state = loadState();
+
+    // ---------- assign stable ids by DOM order ----------
+    var lines = Array.prototype.slice.call(svg.querySelectorAll('.dim-line'));
+    var texts = Array.prototype.slice.call(svg.querySelectorAll('.dim-text'));
+    var groups = Array.prototype.slice.call(svg.querySelectorAll('.drag-group'));
+    var doors = Array.prototype.slice.call(svg.querySelectorAll('.door'));
+
+    lines.forEach(function(el,i){ el.dataset.id = 'line-'+i; });
+    texts.forEach(function(el,i){ el.dataset.id = 'text-'+i; });
+    groups.forEach(function(el,i){ el.dataset.id = 'group-'+i; });
+    // doors already carry data-id from markup
+
+    // ---------- restore saved state ----------
+    lines.forEach(function(el){
+      var s = state.lines[el.dataset.id];
+      if(s){ el.setAttribute('x1',s.x1); el.setAttribute('y1',s.y1); el.setAttribute('x2',s.x2); el.setAttribute('y2',s.y2); }
+    });
+    texts.forEach(function(el){
+      var s = state.texts[el.dataset.id];
+      if(s){
+        el.setAttribute('x', s.x); el.setAttribute('y', s.y);
+        var tf = el.getAttribute('transform');
+        if(tf){
+          var m = tf.match(/rotate\(([-\d.]+)/);
+          if(m) el.setAttribute('transform','rotate('+m[1]+' '+s.x+' '+s.y+')');
+        }
+      }
+    });
+    groups.forEach(function(el){
+      var s = state.groups[el.dataset.id];
+      if(s){ el.setAttribute('transform','translate('+s.tx+' '+s.ty+')'); }
+    });
+    doors.forEach(function(el){
+      var s = state.doors[el.dataset.id];
+      if(s && s.closed){ el.classList.add('closed'); }
+    });
+
+    // ---------- handles layer (drawn on top) ----------
+    var handlesLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+    handlesLayer.setAttribute('id','handlesLayer');
+    svg.appendChild(handlesLayer);
+
+    var handleMap = {}; // lineId -> {h1, h2}
+    function makeHandle(x,y){
+      var c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('class','drag-handle');
+      c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',8);
+      handlesLayer.appendChild(c);
+      return c;
+    }
+    lines.forEach(function(el){
+      var h1 = makeHandle(el.x1.baseVal.value, el.y1.baseVal.value);
+      var h2 = makeHandle(el.x2.baseVal.value, el.y2.baseVal.value);
+      handleMap[el.dataset.id] = {h1:h1, h2:h2};
+      h1.addEventListener('pointerdown', function(e){ startDrag(e, {type:'line-end', line:el, end:1, handle:h1}); });
+      h2.addEventListener('pointerdown', function(e){ startDrag(e, {type:'line-end', line:el, end:2, handle:h2}); });
+    });
+
+    texts.forEach(function(el){
+      el.addEventListener('pointerdown', function(e){ startDrag(e, {type:'text', text:el}); });
+    });
+    groups.forEach(function(el){
+      el.addEventListener('pointerdown', function(e){ startDrag(e, {type:'group', group:el}); });
+    });
+
+    // ---------- drag engine ----------
+    var active = null;
+    function startDrag(e, info){
+      if(!editing) return;
+      e.preventDefault(); e.stopPropagation();
+      var p = svgPoint(e);
+      info.startX = p.x; info.startY = p.y;
+      if(info.type === 'line-end'){
+        info.origX = info.end===1 ? info.line.x1.baseVal.value : info.line.x2.baseVal.value;
+        info.origY = info.end===1 ? info.line.y1.baseVal.value : info.line.y2.baseVal.value;
+      } else if(info.type === 'text'){
+        info.origX = parseFloat(info.text.getAttribute('x'));
+        info.origY = parseFloat(info.text.getAttribute('y'));
+        var tf = info.text.getAttribute('transform');
+        info.angle = null;
+        if(tf){ var m = tf.match(/rotate\(([-\d.]+)/); if(m) info.angle = m[1]; }
+      } else if(info.type === 'group'){
+        var tfm = info.group.getAttribute('transform');
+        var m2 = tfm && tfm.match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/);
+        info.origX = m2 ? parseFloat(m2[1]) : 0;
+        info.origY = m2 ? parseFloat(m2[2]) : 0;
+      }
+      active = info;
+    }
+    document.addEventListener('pointermove', function(e){
+      if(!active) return;
+      var p = svgPoint(e);
+      var dx = p.x - active.startX, dy = p.y - active.startY;
+      if(active.type === 'line-end'){
+        var nx = active.origX + dx, ny = active.origY + dy;
+        if(active.end === 1){ active.line.x1.baseVal.value = nx; active.line.y1.baseVal.value = ny; }
+        else { active.line.x2.baseVal.value = nx; active.line.y2.baseVal.value = ny; }
+        active.handle.setAttribute('cx', nx); active.handle.setAttribute('cy', ny);
+      } else if(active.type === 'text'){
+        var tx = active.origX + dx, ty = active.origY + dy;
+        active.text.setAttribute('x', tx); active.text.setAttribute('y', ty);
+        if(active.angle !== null){ active.text.setAttribute('transform','rotate('+active.angle+' '+tx+' '+ty+')'); }
+      } else if(active.type === 'group'){
+        var gx = active.origX + dx, gy = active.origY + dy;
+        active.group.setAttribute('transform','translate('+gx+' '+gy+')');
+      }
+    });
+    document.addEventListener('pointerup', function(){
+      if(!active) return;
+      persistAll();
+      active = null;
+    });
+
+    function persistAll(){
+      var s = {lines:{},texts:{},groups:{},doors:{}};
+      lines.forEach(function(el){
+        s.lines[el.dataset.id] = {x1:el.x1.baseVal.value,y1:el.y1.baseVal.value,x2:el.x2.baseVal.value,y2:el.y2.baseVal.value};
+      });
+      texts.forEach(function(el){
+        s.texts[el.dataset.id] = {x:parseFloat(el.getAttribute('x')), y:parseFloat(el.getAttribute('y'))};
+      });
+      groups.forEach(function(el){
+        var tfm = el.getAttribute('transform');
+        var m = tfm && tfm.match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/);
+        s.groups[el.dataset.id] = {tx: m?parseFloat(m[1]):0, ty: m?parseFloat(m[2]):0};
+      });
+      doors.forEach(function(el){
+        s.doors[el.dataset.id] = {closed: el.classList.contains('closed')};
+      });
+      state = s;
+      saveState(s);
+    }
+
+    // ---------- doors: click to open/close, always active ----------
+    // give each door a fat invisible hit-line so it's easy to click precisely
+    doors.forEach(function(el){
+      var erase = el.querySelector('.door-erase');
+      if(erase){
+        var hit = document.createElementNS('http://www.w3.org/2000/svg','line');
+        hit.setAttribute('class','door-hit');
+        hit.setAttribute('x1', erase.getAttribute('x1'));
+        hit.setAttribute('y1', erase.getAttribute('y1'));
+        hit.setAttribute('x2', erase.getAttribute('x2'));
+        hit.setAttribute('y2', erase.getAttribute('y2'));
+        hit.setAttribute('stroke', 'transparent');
+        hit.setAttribute('stroke-width', '46');
+        hit.style.pointerEvents = 'stroke';
+        el.insertBefore(hit, el.firstChild);
+      }
+      el.addEventListener('click', function(e){
+        if(active) return; // ignore click that ends a drag
+        el.classList.toggle('closed');
+        persistAll();
+      });
+    });
+
+    // ---------- edit-mode toggle ----------
+    function setEditing(on){
+      editing = on;
+      svg.classList.toggle('editing', on);
+      editBtn.classList.toggle('active', on);
+      editBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      editBtn.textContent = on ? '✓ Editing — drag anything' : '✏️ Edit layout';
+      hint.textContent = on
+        ? 'Drag the red dots, any label, or any piece of furniture. Doors always click to open/close.'
+        : 'Click any door to open/close it — always on.';
+    }
+    editBtn.addEventListener('click', function(){ setEditing(!editing); });
+
+    resetBtn.addEventListener('click', function(){
+      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+      location.reload();
+    });
+
+    setEditing(false);
+  })();
+  </script>
 
   <div class="legend">
     <div class="legend-item"><span class="swatch" style="background:var(--green)"></span>Green</div>
@@ -670,5 +1026,5 @@
     </table>
   </div>
 
-  <footer>Redrawn from the original pencil sketch · shapes and labels verified against zoomed source crops · not an engineering-grade survey</footer>
+  <footer>Redrawn from the original pencil sketch · shapes and labels verified against zoomed source crops · not an engineering-grade survey · edits are saved only in this browser, on this device</footer>
 </div>
