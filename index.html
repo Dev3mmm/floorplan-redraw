@@ -253,6 +253,24 @@
   #floorplanSvg.editing .wall-vertex-handle{ opacity: .9; pointer-events: all; }
   #floorplanSvg.editing .wall-path{ cursor: default; }
 
+  #floatTip{
+    position: fixed;
+    display: none;
+    left: 0; top: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background: var(--ink);
+    color: var(--card);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 9px;
+    border-radius: 6px;
+    max-width: 240px;
+    line-height: 1.4;
+    box-shadow: 0 4px 14px -4px rgba(0,0,0,.35);
+  }
+
   #textEditor{
     position: absolute;
     display: none;
@@ -915,10 +933,26 @@
     handlesLayer.setAttribute('id','handlesLayer');
     svg.appendChild(handlesLayer);
 
+    // Hover-only tooltip: a floating HTML box, shown only while the pointer is over an
+    // element and following the cursor — never rendered inline. (A plain SVG <title> child
+    // renders as literal visible text in some browsers when nested inside a <text> element,
+    // which is the bug this replaces.)
+    var tipBox = document.createElement('div');
+    tipBox.id = 'floatTip';
+    document.body.appendChild(tipBox);
     function addTip(el, text){
-      var t = document.createElementNS('http://www.w3.org/2000/svg','title');
-      t.textContent = text;
-      el.appendChild(t);
+      el.dataset.tipText = text;
+      el.addEventListener('pointerenter', function(){
+        tipBox.textContent = el.dataset.tipText;
+        tipBox.style.display = 'block';
+      });
+      el.addEventListener('pointermove', function(e){
+        tipBox.style.left = (e.clientX + 14) + 'px';
+        tipBox.style.top = (e.clientY + 16) + 'px';
+      });
+      el.addEventListener('pointerleave', function(){
+        tipBox.style.display = 'none';
+      });
     }
 
     var handleMap = {};
@@ -1010,7 +1044,7 @@
       if(el) el.classList.add('text-selected');
     }
     function registerText(el){
-      if(!el.querySelector('title')) addTip(el, 'Drag to move · scroll to resize font · double-click to rename · click then Delete to remove');
+      if(!el.dataset.tipText) addTip(el, 'Drag to move · scroll to resize font · double-click to rename · click then Delete to remove');
       el.addEventListener('pointerdown', function(e){ selectText(el); startDrag(e, {type:'text', text:el}); });
       el.addEventListener('dblclick', function(e){ if(editing){ e.preventDefault(); e.stopPropagation(); openTextEditor(el); } });
       el.addEventListener('wheel', function(e){
@@ -1250,8 +1284,8 @@
       el.addEventListener('click', function(e){
         if(active) return; // ignore click that ends a drag
         el.classList.toggle('closed');
-        var t = el.querySelector('.door-hit title');
-        if(t) t.textContent = el.classList.contains('closed') ? 'Click to open this door' : 'Click to close this door';
+        var hitEl = el.querySelector('.door-hit');
+        if(hitEl) hitEl.dataset.tipText = el.classList.contains('closed') ? 'Click to open this door' : 'Click to close this door';
         persistAll();
       });
     });
