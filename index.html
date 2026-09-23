@@ -1,6 +1,6 @@
 <title>Apartment Floor Plan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Architects+Daughter&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Architects+Daughter&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
   :root{
     --paper:#eeece6;
@@ -25,6 +25,7 @@
     --fill-circ:#e7e4dd;
     --fill-foyer:#eee1cd;
     --fill-stair:#efe6c8;
+    --wall:#3a362f;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){
@@ -51,6 +52,7 @@
       --fill-circ:#2a2822;
       --fill-foyer:#2f2820;
       --fill-stair:#312c1d;
+      --wall:#0f0e0c;
       color-scheme: dark;
     }
   }
@@ -77,6 +79,7 @@
     --fill-circ:#2a2822;
     --fill-foyer:#2f2820;
     --fill-stair:#312c1d;
+    --wall:#0f0e0c;
     color-scheme: dark;
   }
 
@@ -136,7 +139,7 @@
     width: 100%;
     height: auto;
     display:block;
-    font-family: 'Caveat', cursive;
+    font-family: 'Inter', sans-serif;
   }
 
   .legend{
@@ -268,61 +271,144 @@
 
       <!-- ================= FUNCTION FILL TINTS ================= -->
       <g stroke="none">
-        <path d="M95,220 L155,185 L600,185 L600,575 L95,575 Z" fill="var(--fill-bed)"/>
+        <path d="M95,220 L155,185 L600,185 L600,595 L95,595 Z" fill="var(--fill-bed)"/>
         <rect x="85" y="595" width="420" height="275" fill="var(--fill-bed)"/>
-        <rect x="80" y="880" width="425" height="560" fill="var(--fill-bed)"/>
-        <rect x="70" y="1450" width="530" height="270" fill="var(--fill-bed)"/>
+        <rect x="80" y="870" width="425" height="570" fill="var(--fill-bed)"/>
+        <rect x="70" y="1440" width="530" height="280" fill="var(--fill-bed)"/>
         <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" fill="var(--fill-foyer)"/>
-        <rect x="505" y="595" width="90" height="855" fill="var(--fill-circ)"/>
+        <rect x="505" y="595" width="90" height="845" fill="var(--fill-circ)"/>
         <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z" fill="var(--fill-stair)"/>
         <rect x="690" y="215" width="190" height="245" fill="var(--fill-bath)"/>
-        <rect x="605" y="965" width="275" height="285" fill="var(--fill-circ)"/>
-        <rect x="880" y="610" width="70" height="640" fill="var(--fill-circ)"/>
+        <rect x="605" y="965" width="275" height="265" fill="var(--fill-circ)"/>
+        <rect x="880" y="610" width="70" height="620" fill="var(--fill-circ)"/>
         <rect x="880" y="230" width="365" height="380" fill="var(--fill-bed)"/>
-        <rect x="955" y="620" width="290" height="310" fill="var(--fill-bath)"/>
-        <rect x="955" y="940" width="290" height="290" fill="var(--fill-kitchen)"/>
+        <rect x="955" y="610" width="290" height="320" fill="var(--fill-bath)"/>
+        <rect x="955" y="930" width="290" height="300" fill="var(--fill-kitchen)"/>
         <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z" fill="var(--fill-living)"/>
       </g>
 
-      <!-- ================= WALLS (pencil layer) ================= -->
-      <g fill="none" stroke="var(--line)" stroke-width="2.5" stroke-linejoin="round">
-        <path d="M95,220 L155,185 L600,185 L600,575 L95,575 Z"/>
+      <!-- ================= WALLS: single thick unified layer, no seams ================= -->
+      <g fill="none" stroke="var(--wall)" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M95,220 L155,185 L600,185 L600,595 L95,595 Z"/>
         <rect x="85" y="595" width="420" height="275"/>
-        <rect x="80" y="880" width="425" height="560"/>
-        <rect x="70" y="1450" width="530" height="270"/>
+        <rect x="80" y="870" width="425" height="570"/>
+        <rect x="70" y="1440" width="530" height="280"/>
         <!-- entry foyer: stepped L (shallow left + tall right) -->
         <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z"/>
-        <rect x="505" y="595" width="90" height="855"/>
+        <rect x="505" y="595" width="90" height="845"/>
         <!-- irregular stairwell shaft: narrow sliver up top, widens lower -->
         <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z"/>
         <rect x="690" y="215" width="190" height="245"/>
-        <rect x="605" y="965" width="275" height="285"/>
-        <rect x="880" y="610" width="70" height="640"/>
+        <rect x="605" y="965" width="275" height="265"/>
+        <rect x="880" y="610" width="70" height="620"/>
         <rect x="880" y="230" width="365" height="380"/>
-        <rect x="955" y="620" width="290" height="310"/>
-        <rect x="955" y="940" width="290" height="290"/>
+        <rect x="955" y="610" width="290" height="320"/>
+        <rect x="955" y="930" width="290" height="300"/>
         <!-- Salon: wide top band + narrower lower band (mirrors the foyer step) -->
         <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z"/>
       </g>
 
-      <!-- ================= COLOR HIGHLIGHT LAYER ================= -->
-      <g fill="none" stroke-width="7" stroke-linejoin="round" opacity=".92">
-        <path d="M95,220 L155,185 L600,185 L600,575 L95,575 Z" stroke="var(--green)"/>
-        <rect x="85" y="595" width="420" height="275" stroke="var(--green)"/>
-        <rect x="80" y="880" width="425" height="560" stroke="var(--pink)"/>
-        <rect x="70" y="1450" width="530" height="270" stroke="var(--green)"/>
-        <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" stroke="var(--orange)"/>
-        <rect x="505" y="595" width="90" height="855" stroke="var(--gray)"/>
-        <path d="M605,460 L605,215 L690,215 L690,460 L880,460 L880,965 L605,965 Z" stroke="var(--gold)"/>
-        <rect x="690" y="215" width="190" height="245" stroke="var(--blue)"/>
-        <rect x="605" y="965" width="275" height="285" stroke="var(--blue)"/>
-        <rect x="880" y="610" width="70" height="640" stroke="var(--gray)"/>
-        <rect x="880" y="230" width="365" height="380" stroke="var(--green)"/>
-        <rect x="955" y="620" width="290" height="310" stroke="var(--pink)"/>
-        <rect x="955" y="940" width="290" height="290" stroke="var(--red)"/>
-        <path d="M605,1230 L1245,1230 L1245,1985 L895,1985 L895,1655 L605,1655 Z" stroke="var(--red)"/>
-        <!-- shared foyer/salon step border, drawn in red to match source -->
-        <line x1="605" y1="1655" x2="895" y2="1655" stroke="var(--red)"/>
+      <!-- ================= source-marker color tags (small corner chips, one per traced room) ================= -->
+      <g stroke="var(--wall)" stroke-width="1.5">
+        <rect x="108" y="196" width="16" height="16" fill="var(--green)"/>
+        <rect x="98" y="606" width="16" height="16" fill="var(--green)"/>
+        <rect x="93" y="881" width="16" height="16" fill="var(--pink)"/>
+        <rect x="83" y="1451" width="16" height="16" fill="var(--green)"/>
+        <rect x="83" y="1966" width="16" height="16" fill="var(--orange)"/>
+        <rect x="518" y="606" width="16" height="16" fill="var(--gray)"/>
+        <rect x="615" y="226" width="16" height="16" fill="var(--gold)"/>
+        <rect x="700" y="226" width="16" height="16" fill="var(--blue)"/>
+        <rect x="615" y="976" width="16" height="16" fill="var(--blue)"/>
+        <rect x="891" y="621" width="16" height="16" fill="var(--gray)"/>
+        <rect x="891" y="241" width="16" height="16" fill="var(--green)"/>
+        <rect x="966" y="621" width="16" height="16" fill="var(--pink)"/>
+        <rect x="1220" y="1205" width="16" height="16" fill="var(--red)"/>
+        <rect x="615" y="1241" width="16" height="16" fill="var(--red)"/>
+      </g>
+
+      <!-- ================= DOOR OPENINGS: erase the wall + swing arc + leaf ================= -->
+      <g>
+        <!-- Room A -> corridor (bottom wall) -->
+        <line x1="478" y1="595" x2="562" y2="595" stroke="var(--fill-bed)" stroke-width="12"/>
+        <path d="M478,595 L478,675" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <path d="M478,675 A80,80 0 0 1 558,595" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+
+        <!-- Room B -> corridor (right wall) -->
+        <line x1="505" y1="680" x2="505" y2="750" stroke="var(--fill-circ)" stroke-width="12"/>
+        <path d="M505,680 L435,680" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <path d="M435,680 A70,70 0 0 1 505,750" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+
+        <!-- Room C -> corridor (right wall) -->
+        <line x1="505" y1="1055" x2="505" y2="1125" stroke="var(--fill-circ)" stroke-width="12"/>
+        <path d="M505,1055 L435,1055" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <path d="M435,1055 A70,70 0 0 1 505,1125" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+
+        <!-- Room D -> corridor (top wall, right portion) -->
+        <line x1="520" y1="1440" x2="590" y2="1440" stroke="var(--fill-circ)" stroke-width="12"/>
+        <path d="M520,1440 L520,1510" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <path d="M520,1510 A70,70 0 0 1 590,1440" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+
+        <!-- Room D -> entry foyer -->
+        <line x1="500" y1="1720" x2="570" y2="1720" stroke="var(--fill-foyer)" stroke-width="12"/>
+        <path d="M500,1720 L500,1650" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <path d="M500,1650 A70,70 0 0 1 570,1720" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+
+        <!-- blue landing room -> stairwell (bottom wall) -->
+        <line x1="800" y1="460" x2="862" y2="460" stroke="var(--fill-stair)" stroke-width="12"/>
+        <path d="M855,460 A55,55 0 0 0 810,405" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <path d="M855,460 L855,405" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+
+        <!-- Room E -> corridor (left wall) -->
+        <line x1="880" y1="350" x2="880" y2="420" stroke="var(--fill-circ)" stroke-width="12"/>
+        <path d="M880,420 L950,420" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <path d="M950,420 A70,70 0 0 1 880,350" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+
+        <!-- Room F -> corridor (left wall) -->
+        <line x1="955" y1="690" x2="955" y2="760" stroke="var(--fill-circ)" stroke-width="12"/>
+        <path d="M955,760 L1025,760" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <path d="M1025,760 A70,70 0 0 1 955,690" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+
+        <!-- Kitchen open to Salon: wide pass-through -->
+        <line x1="1000" y1="1230" x2="1120" y2="1230" stroke="var(--fill-kitchen)" stroke-width="12"/>
+        <line x1="1000" y1="1230" x2="1120" y2="1230" stroke="var(--fill-living)" stroke-width="4" stroke-dasharray="2 6" opacity=".5"/>
+
+        <!-- Foyer <-> Salon -->
+        <line x1="760" y1="1655" x2="840" y2="1655" stroke="var(--fill-foyer)" stroke-width="12"/>
+        <path d="M760,1655 L760,1585" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+        <path d="M760,1585 A70,70 0 0 1 830,1655" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+
+        <!-- Lift: sliding door mark on the corridor-facing wall -->
+        <line x1="880" y1="1070" x2="880" y2="1130" stroke="var(--fill-circ)" stroke-width="12"/>
+        <line x1="875" y1="1070" x2="875" y2="1130" stroke="var(--ink-soft)" stroke-width="2"/>
+        <line x1="885" y1="1070" x2="885" y2="1130" stroke="var(--ink-soft)" stroke-width="2"/>
+
+        <!-- Salon front door (bottom wall) -->
+        <line x1="805" y1="1985" x2="895" y2="1985" stroke="var(--fill-living)" stroke-width="12"/>
+        <path d="M895,1985 A90,90 0 0 0 805,1895" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <path d="M895,1985 L895,1895" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+
+        <!-- Salon second door (right wall) -->
+        <line x1="1245" y1="1780" x2="1245" y2="1860" stroke="var(--fill-living)" stroke-width="12"/>
+        <path d="M1245,1780 A80,80 0 0 1 1165,1860" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>
+        <path d="M1245,1780 L1165,1780" fill="none" stroke="var(--ink-soft)" stroke-width="2"/>
+      </g>
+
+      <!-- ================= WINDOWS: gap + double tick on exterior walls ================= -->
+      <g stroke="var(--ink-soft)" stroke-width="2.5">
+        <line x1="340" y1="185" x2="440" y2="185" stroke="var(--fill-bed)" stroke-width="9"/>
+        <line x1="350" y1="181" x2="350" y2="189"/><line x1="430" y1="181" x2="430" y2="189"/>
+        <line x1="85" y1="680" x2="85" y2="750" stroke="var(--fill-bed)" stroke-width="9"/>
+        <line x1="81" y1="690" x2="89" y2="690"/><line x1="81" y1="740" x2="89" y2="740"/>
+        <line x1="80" y1="1080" x2="80" y2="1150" stroke="var(--fill-bed)" stroke-width="9"/>
+        <line x1="76" y1="1090" x2="84" y2="1090"/><line x1="76" y1="1140" x2="84" y2="1140"/>
+        <line x1="1000" y1="230" x2="1100" y2="230" stroke="var(--fill-bed)" stroke-width="9"/>
+        <line x1="1010" y1="226" x2="1010" y2="234"/><line x1="1090" y1="226" x2="1090" y2="234"/>
+        <line x1="1245" y1="680" x2="1245" y2="760" stroke="var(--fill-bath)" stroke-width="9"/>
+        <line x1="1241" y1="690" x2="1249" y2="690"/><line x1="1241" y1="750" x2="1249" y2="750"/>
+        <line x1="1245" y1="1000" x2="1245" y2="1080" stroke="var(--fill-kitchen)" stroke-width="9"/>
+        <line x1="1241" y1="1010" x2="1249" y2="1010"/><line x1="1241" y1="1070" x2="1249" y2="1070"/>
+        <line x1="1245" y1="1400" x2="1245" y2="1490" stroke="var(--fill-living)" stroke-width="9"/>
+        <line x1="1241" y1="1410" x2="1249" y2="1410"/><line x1="1241" y1="1480" x2="1249" y2="1480"/>
       </g>
 
       <!-- ================= STAIR HATCHING ================= -->
@@ -337,7 +423,7 @@
         <rect x="175" y="192" width="216" height="52" opacity=".8"/>
         <line x1="247" y1="192" x2="247" y2="244"/>
         <line x1="319" y1="192" x2="319" y2="244"/>
-        <path d="M560,575 A80,80 0 0 0 480,655" opacity=".6"/>
+        <path d="M560,595 A80,80 0 0 0 480,675" opacity=".6"/>
       </g>
       <use href="#bedIcon" x="115" y="280" width="150" height="230"/>
       <use href="#nightstand" x="115" y="510" width="42" height="42"/>
@@ -414,49 +500,47 @@
         <circle cx="1207" cy="1102" r="6" fill="var(--ink)"/>
       </g>
 
-      <!-- SALON: console unit in the sofa alcove, an L-sofa + coffee table + rug furnishing the open living space, door arcs -->
+      <!-- SALON: small sofa/console kept exactly where the sketch drew it, plus door arcs -->
       <g stroke="var(--ink)" stroke-width="2" fill="none">
-        <path d="M850,1470 L850,1420 L920,1420 L920,1470" opacity=".8"/>
-        <rect x="850" y="1470" width="70" height="55" opacity=".8"/>
-
-        <!-- L-shaped sofa against the right wall -->
-        <path d="M1000,1300 h205 v170 h-60 v-110 h-145 z" opacity=".9"/>
-        <line x1="1000" y1="1330" x2="1145" y2="1330" opacity=".5"/>
-        <line x1="1060" y1="1300" x2="1060" y2="1330" opacity=".5"/>
-        <line x1="1120" y1="1300" x2="1120" y2="1330" opacity=".5"/>
-        <line x1="1175" y1="1330" x2="1175" y2="1470" opacity=".5"/>
-
-        <!-- coffee table + rug -->
-        <rect x="1000" y="1420" width="90" height="55" rx="6" opacity=".85"/>
-        <rect x="960" y="1390" width="230" height="150" rx="14" stroke-dasharray="3 6" opacity=".5"/>
+        <!-- sofa in its original nook: backrest + two seat cushions -->
+        <path d="M850,1420 L920,1420 L920,1525 L850,1525 L850,1420" opacity=".85"/>
+        <line x1="850" y1="1420" x2="920" y2="1420" stroke-width="4" opacity=".85"/>
+        <line x1="850" y1="1470" x2="920" y2="1470" opacity=".5"/>
 
         <path d="M895,1985 A90,90 0 0 0 805,1895" opacity=".6"/>
         <path d="M1245,1780 A80,80 0 0 1 1165,1860" opacity=".6"/>
       </g>
 
-      <!-- small structural column marks noted in the sketch -->
-      <g fill="var(--ink)" opacity=".55">
-        <rect x="326" y="713" width="16" height="12"/>
-        <rect x="596" y="713" width="14" height="12"/>
-        <rect x="826" y="900" width="14" height="12"/>
-        <rect x="636" y="1225" width="14" height="12"/>
-      </g>
-
       <!-- entrance arrow: points right, into the corridor -->
       <line x1="805" y1="905" x2="858" y2="905" stroke="var(--red)" stroke-width="5" marker-end="url(#bigArrow)"/>
 
-      <!-- ================= LABELS ================= -->
+      <!-- ================= ROOM NAME LABELS (clean sans) ================= -->
+      <g fill="var(--ink)" font-family="'Inter',sans-serif" text-anchor="middle">
+        <text x="345" y="440" font-size="22" font-weight="600">Bedroom</text>
+        <text x="290" y="740" font-size="22" font-weight="600">Bedroom</text>
+        <text x="290" y="1050" font-size="22" font-weight="600">Bedroom</text>
+        <text x="220" y="1690" font-size="22" font-weight="600">Bedroom</text>
+        <text x="280" y="1900" font-size="18" font-weight="600" opacity=".8">Foyer</text>
+        <text x="550" y="1010" font-size="16" font-weight="600" opacity=".7" transform="rotate(-90 550 1010)">Corridor</text>
+        <text x="742" y="690" font-size="16" font-weight="600" opacity=".8" transform="rotate(-90 742 690)">Stairs</text>
+        <text x="785" y="395" font-size="15" font-weight="600" opacity=".8">Storage</text>
+        <text x="742" y="1145" font-size="22" font-weight="600">Lift</text>
+        <text x="915" y="900" font-size="15" font-weight="600" opacity=".7" transform="rotate(-90 915 900)">Corridor</text>
+        <text x="1060" y="440" font-size="22" font-weight="600">Bedroom</text>
+        <text x="1100" y="710" font-size="19" font-weight="600">Bathroom</text>
+        <text x="1100" y="1110" font-size="20" font-weight="600">Kitchen</text>
+        <text x="1030" y="1300" font-size="24" font-weight="600">Salón</text>
+      </g>
+
+      <!-- ================= FIXTURE LABELS ================= -->
       <g fill="var(--ink)" font-size="30">
-        <text x="720" y="1095" text-anchor="middle" font-size="26">lift</text>
-        <text x="742" y="720" text-anchor="middle" font-size="17" transform="rotate(-90 742 720)" opacity=".8">Hueco escalera / Ascensor</text>
-        <text x="1000" y="945" text-anchor="middle" font-size="18" font-family="'IBM Plex Mono',monospace">FRIGO</text>
-        <text x="1105" y="945" text-anchor="middle" font-size="14" font-family="'IBM Plex Mono',monospace">HORNO</text>
-        <text x="1105" y="960" text-anchor="middle" font-size="14" font-family="'IBM Plex Mono',monospace">MICRO</text>
-        <text x="1000" y="1470" text-anchor="middle" font-size="28" transform="rotate(-90 1000 1470)">Salón</text>
+        <text x="1000" y="945" text-anchor="middle" font-size="15" font-family="'IBM Plex Mono',monospace">FRIGO</text>
+        <text x="1105" y="945" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace">HORNO</text>
+        <text x="1105" y="958" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace">MICRO</text>
       </g>
 
       <!-- ================= DIMENSIONS ================= -->
-      <g fill="var(--ink)" font-size="26" text-anchor="middle">
+      <g fill="var(--ink-soft)" font-size="18" font-family="'Inter',sans-serif" text-anchor="middle">
         <!-- Room A -->
         <line x1="140" y1="560" x2="555" y2="560" stroke="var(--ink)" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
         <text x="347" y="548">3.4m</text>
@@ -506,7 +590,7 @@
 
         <!-- Kitchen -->
         <text x="1195" y="965">2.5m</text>
-        <text x="1155" y="1095" transform="rotate(-90 1155 1095)">3m</text>
+        <text x="965" y="1080" transform="rotate(-90 965 1080)">3m</text>
 
         <!-- Salon -->
         <text x="925" y="1215">6.3m</text>
@@ -514,7 +598,7 @@
         <text x="1275" y="1610" transform="rotate(-90 1275 1610)">6.6m</text>
         <text x="640" y="1440" transform="rotate(-90 640 1440)">4.2m</text>
         <text x="750" y="1645">2.5m</text>
-        <text x="905" y="1470" transform="rotate(-90 905 1470)">4.6m</text>
+        <text x="945" y="1470" transform="rotate(-90 945 1470)">4.6m</text>
       </g>
     </svg>
   </div>
@@ -530,7 +614,7 @@
   </div>
 
   <p class="note">
-    <b>Reading note —</b> the marker colors on the original sketch are not a room-type code (pink marks both a bedroom and the bathroom); they're only used to make adjacent outlines easy to tell apart, so the table below lists color exactly as drawn, separately from what the room actually is. Dimensions are copied as written (apostrophe used as decimal point, e.g. "3'4m" → 3.4m). Three shapes are genuinely irregular, not boxes: Room A's soffit-cut corner, the stepped entry foyer, the offset stairwell shaft, and the L-shaped Salón with its sofa alcove.
+    <b>Reading note —</b> the small colored square in each room's corner is the marker color from the original sketch — it's not a room-type code (pink marks both a bedroom and the bathroom), only a tag to keep that source detail on the page; the table below lists it separately from what the room actually is. Walls are drawn as one continuous unbroken line with real door openings cut into them (swing arcs where the sketch showed one, plain gaps at the kitchen's open pass-through and the lift's sliding door) and window breaks on the exterior walls. Dimensions are copied as written (apostrophe used as decimal point, e.g. "3'4m" → 3.4m). Four shapes are genuinely irregular, not boxes: Room A's soffit-cut corner, the stepped entry foyer, the offset stairwell shaft, and the L-shaped Salón with its sofa alcove.
   </p>
 
   <h2>Room reference</h2>
