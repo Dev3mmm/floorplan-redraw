@@ -361,7 +361,7 @@
       <g stroke="none">
         <path d="M95,220 L155,185 L600,185 L600,595 L95,595 Z" fill="var(--fill-bed)"/>
         <rect x="85" y="595" width="420" height="275" fill="var(--fill-bed)"/>
-        <rect x="80" y="870" width="425" height="570" fill="var(--fill-bed)"/>
+        <rect x="80" y="870" width="425" height="570" fill="var(--fill-bath)"/>
         <rect x="70" y="1440" width="530" height="280" fill="var(--fill-bed)"/>
         <path d="M70,1720 L605,1720 L605,1655 L895,1655 L895,1985 L70,1985 Z" fill="var(--fill-foyer)"/>
         <rect x="505" y="595" width="90" height="845" fill="var(--fill-circ)"/>
@@ -572,18 +572,21 @@
       <use class="drag-group" href="#bedIcon" x="115" y="630" width="150" height="195"/>
       <use class="drag-group" href="#nightstand" x="115" y="828" width="38" height="38"/>
 
-      <!-- ROOM C: two dividing rails + built-in wardrobe at bottom + bed in the top band -->
+      <!-- ROOM C: massive bathroom — tub/shower zone between two rails, double vanity at the bottom -->
       <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
         <line x1="95" y1="965" x2="495" y2="965" opacity=".7"/>
         <line x1="95" y1="1195" x2="495" y2="1195" opacity=".7"/>
-        <circle cx="230" cy="1080" r="4" fill="var(--ink)"/>
-        <circle cx="330" cy="1080" r="4" fill="var(--ink)"/>
+        <rect x="120" y="985" width="350" height="190" rx="10" opacity=".85"/>
+        <circle cx="230" cy="1080" r="5" fill="var(--ink)"/>
+        <circle cx="330" cy="1080" r="5" fill="var(--ink)"/>
+        <line x1="120" y1="1030" x2="470" y2="1030" opacity=".4"/>
+        <!-- double vanity -->
         <rect x="130" y="1390" width="95" height="34"/>
-        <line x1="177" y1="1390" x2="177" y2="1424"/>
+        <circle cx="177" cy="1407" r="4" fill="var(--ink)"/>
         <rect x="300" y="1390" width="95" height="34"/>
-        <line x1="347" y1="1390" x2="347" y2="1424"/>
+        <circle cx="347" cy="1407" r="4" fill="var(--ink)"/>
+        <line x1="130" y1="1424" x2="395" y2="1424" opacity=".5"/>
       </g>
-      <use class="drag-group" href="#bedIcon" x="140" y="895" width="150" height="195"/>
 
       <!-- ROOM D: wardrobe/desk + bed -->
       <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
@@ -655,7 +658,7 @@
       <g id="labelsLayer" fill="var(--ink)" font-family="'Inter',sans-serif" text-anchor="middle">
         <text class="dim-text" x="345" y="440" font-size="22" font-weight="600">Bedroom</text>
         <text class="dim-text" x="290" y="740" font-size="22" font-weight="600">Bedroom</text>
-        <text class="dim-text" x="290" y="1050" font-size="22" font-weight="600">Bedroom</text>
+        <text class="dim-text" x="290" y="1050" font-size="22" font-weight="600">Bathroom</text>
         <text class="dim-text" x="220" y="1690" font-size="22" font-weight="600">Bedroom</text>
         <text class="dim-text" x="280" y="1900" font-size="18" font-weight="600" opacity=".8">Foyer</text>
         <text class="dim-text" x="550" y="1010" font-size="16" font-weight="600" opacity=".7" transform="rotate(-90 550 1010)">Corridor</text>
@@ -998,7 +1001,7 @@
   </div>
 
   <p class="note">
-    <b>Reading note —</b> the small colored square in each room's corner is the marker color from the original sketch — it's not a room-type code (pink marks both a bedroom and the bathroom), only a tag to keep that source detail on the page; the table below lists it separately from what the room actually is. Walls are drawn as one continuous unbroken line with real door openings cut into them (swing arcs where the sketch showed one, plain gaps at the kitchen's open pass-through and the lift's sliding door) and window breaks on the exterior walls. Dimensions are copied as written (apostrophe used as decimal point, e.g. "3'4m" → 3.4m). Four shapes are genuinely irregular, not boxes: Room A's soffit-cut corner, the stepped entry foyer, the offset stairwell shaft, and the L-shaped Salón with its sofa alcove.
+    <b>Reading note —</b> the small colored square in each room's corner is the marker color from the original sketch — it's not a room-type code (green marks four separate bedrooms), only a tag to keep that source detail on the page; the table below lists it separately from what the room actually is. Walls are drawn as one continuous unbroken line with real door openings cut into them (swing arcs where the sketch showed one, plain gaps at the kitchen's open pass-through and the lift's sliding door) and window breaks on the exterior walls. Dimensions are copied as written (apostrophe used as decimal point, e.g. "3'4m" → 3.4m). Four shapes are genuinely irregular, not boxes: Room A's soffit-cut corner, the stepped entry foyer, the offset stairwell shaft, and the L-shaped Salón with its sofa alcove.
   </p>
 
   <h2>Room reference</h2>
@@ -1010,7 +1013,7 @@
       <tbody>
         <tr><td class="num">1</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Rectangle, top-left corner cut by a diagonal soffit line<span class="shape-flag">irregular</span></td><td>3.4 × 3.0 m</td><td>3-leaf built-in wardrobe along top wall, door swing bottom-right → <b>Bedroom</b></td></tr>
         <tr><td class="num">2</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Plain rectangle</td><td>2.7 × 3.0 m</td><td>Empty → <b>Bedroom</b></td></tr>
-        <tr><td class="num">3</td><td class="colorcell"><span class="dot" style="background:var(--pink)"></span>Pink</td><td>Plain rectangle</td><td>2.7 × 4.5 m</td><td>2 dividing rails, 2 marks mid-room, wardrobe at bottom → <b>Bedroom</b></td></tr>
+        <tr><td class="num">3</td><td class="colorcell"><span class="dot" style="background:var(--pink)"></span>Pink</td><td>Plain rectangle</td><td>2.7 × 4.5 m</td><td>Tub/shower zone between two rails, double vanity at the bottom → <b>Bathroom</b> (large)</td></tr>
         <tr><td class="num">4</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Plain rectangle</td><td>3.1 × 3.2 m</td><td>Wardrobe + table/desk with leg brace → <b>Bedroom</b></td></tr>
         <tr><td class="num">5</td><td class="colorcell"><span class="dot" style="background:var(--orange)"></span>Orange (+red on upper edges)</td><td>Stepped L-shape<span class="shape-flag">irregular</span></td><td>1.5 m tall (left, under Room D) → steps up to 2.5 × 3.2 m (right); 6.1 m along the bottom</td><td>Empty passage linking Room D's side to the Salón → <b>Entry foyer</b></td></tr>
         <tr><td class="num">6</td><td class="colorcell"><span class="dot" style="background:var(--gray)"></span>Gray</td><td>Plain rectangle</td><td>1.0 × 6.7 m</td><td>Empty → <b>Corridor</b> (bedrooms ↔ stairwell)</td></tr>
