@@ -25,6 +25,7 @@
     --fill-circ:#e7e4dd;
     --fill-foyer:#eee1cd;
     --fill-stair:#efe6c8;
+    --fill-terrace:#dfe8dc;
     --wall:#3a362f;
     color-scheme: light;
   }
@@ -52,6 +53,7 @@
       --fill-circ:#2a2822;
       --fill-foyer:#2f2820;
       --fill-stair:#312c1d;
+      --fill-terrace:#232a20;
       --wall:#0f0e0c;
       color-scheme: dark;
     }
@@ -79,6 +81,7 @@
     --fill-circ:#2a2822;
     --fill-foyer:#2f2820;
     --fill-stair:#312c1d;
+    --fill-terrace:#232a20;
     --wall:#0f0e0c;
     color-scheme: dark;
   }
@@ -253,6 +256,13 @@
   #floorplanSvg.editing .wall-vertex-handle{ opacity: .9; pointer-events: all; }
   #floorplanSvg.editing .wall-path{ cursor: default; }
 
+  #wallSegLayer .wall-seg{ pointer-events: none; }
+  #floorplanSvg.editing #wallSegLayer .seg-hit{ cursor: move; }
+  .wall-seg.seg-selected{ stroke: var(--blue) !important; }
+  #floorplanSvg.editing .seg-hit{ pointer-events: stroke; }
+  #floorplanSvg:not(.editing) .seg-hit{ pointer-events: none; }
+  #floorplanSvg.editing #wallDrawHint{ cursor: crosshair; }
+
   .window-obj{ pointer-events: none; }
   #floorplanSvg.editing .window-obj{ pointer-events: visiblePainted; cursor: move; }
   #floorplanSvg.editing .window-obj .win-erase{ stroke-width: 16; }
@@ -387,7 +397,7 @@
   <header>
     <p class="eyebrow">Traced from hand sketch · shapes + dimensions verified against zoomed source photo</p>
     <h1>Apartment Floor Plan</h1>
-    <p class="sub">Digital redraw of the pencil-and-marker sketch. Every room outline, corridor, the stepped entry foyer, the L-shaped Salón, and the irregular stairwell shaft are traced to match the original shapes — not simplified into plain boxes — with every dimension label carried over exactly as marked. Click "Edit layout" to drag any dimension line (grab the middle to move it whole, or an end to resize it), any label, or any furniture piece; grab a blue dot to resize one of the 10 rectangular rooms; scroll on a label to grow or shrink its text; double-click a label to rename it; select a label and press Delete to remove it; "+ Add label" drops in a new one. Windows work the same way — drag any existing one onto a different wall, select + Delete to remove it, "+ Add window" creates a new one to drag into place. Click any door any time to open or close it. Edits save automatically in this browser and reload next time you open this page here. Use "Download" to export the current state as a PNG, JPEG, WebP or PDF file.</p>
+    <p class="sub">Digital redraw of the pencil-and-marker sketch. Every wall is straight with square corners — the stepped entry foyer, the L-shaped Salón, and the offset stairwell shaft keep their real adjacency without any diagonals — with every dimension label carried over exactly as marked. Click "Edit layout": every wall is now its own selectable piece — click one, drag it to move or resize it, or select it and press Delete to remove it outright; "+ Add wall" draws a brand new one (click a start point, then an end point). Dimension lines, labels and furniture all drag the same way as before; grab a blue dot to resize one of the 10 rectangular rooms, an orange dot to reshape a stepped wall's corner. Windows and doors both work like labels — drag an existing one onto any wall, select + Delete to remove it, "+ Add window" / "+ Add door" drops in a new one to position. Click any of the original doors any time to open or close it. Edits save automatically in this browser and reload next time you open this page here. Use "Download" to export the current state as a PNG, JPEG, WebP or PDF file.</p>
   </header>
 
   <div class="plate">
@@ -395,6 +405,9 @@
       <button class="tbtn" id="editToggle" type="button" aria-pressed="false" title="Turn on dragging for lines, labels, furniture and walls">✏️ Edit layout</button>
       <button class="tbtn ghost" id="addLabelBtn" type="button" style="display:none;" title="Create a new text label you can drag anywhere">+ Add label</button>
       <button class="tbtn ghost" id="addWindowBtn" type="button" style="display:none;" title="Create a new window you can drag onto any wall">+ Add window</button>
+      <button class="tbtn ghost" id="addWallBtn" type="button" style="display:none;" title="Draw a brand new wall: click a start point, then an end point">+ Add wall</button>
+      <button class="tbtn ghost" id="addDoorBtn" type="button" style="display:none;" title="Create a new door opening you can drag onto any wall">+ Add door</button>
+      <button class="tbtn ghost" id="addTerraceBtn" type="button" style="display:none;" title="Draw a new outdoor zone: click one corner, then the opposite corner">+ Add terrace</button>
       <button class="tbtn ghost" id="pdfBtn" type="button" title="Download the current plan (with your edits) as a file">⬇ Download</button>
       <select id="formatSelect" class="tbtn ghost" title="File format for the download">
         <option value="png">PNG</option>
@@ -438,7 +451,7 @@
       <!-- rect walls double as their room's floor fill AND are wall-resizable (drag any edge). -->
       <!-- wall-path shapes (irregular, multi-point) are resizable by dragging any corner dot. -->
       <g fill="none" stroke="var(--wall)" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
-        <path class="wall-path" data-id="wallpath-roomA" d="M95,220 L155,185 L600,185 L600,595 L95,595 Z" fill="var(--fill-bed)"/>
+        <rect class="wall-rect" x="95" y="185" width="505" height="410" fill="var(--fill-bed)"/>
         <rect class="wall-rect" x="85" y="595" width="420" height="275" fill="var(--fill-bed)"/>
         <rect class="wall-rect" x="80" y="870" width="425" height="570" fill="var(--fill-bath)"/>
         <rect class="wall-rect" x="70" y="1440" width="530" height="280" fill="var(--fill-bed)"/>
@@ -641,7 +654,6 @@
       <!-- ================= FURNITURE (draggable as whole pieces in edit mode) ================= -->
       <g id="furnLayer">
       <g class="drag-group" stroke="var(--ink)" stroke-width="2" fill="none">
-        <path d="M120,220 L175,192 L175,244" opacity=".7"/>
         <rect x="175" y="192" width="216" height="52" opacity=".8"/>
         <line x1="247" y1="192" x2="247" y2="244"/>
         <line x1="319" y1="192" x2="319" y2="244"/>
@@ -862,6 +874,9 @@
     var addLabelBtn = document.getElementById('addLabelBtn');
     var addWindowBtn = document.getElementById('addWindowBtn');
     var pdfBtn = document.getElementById('pdfBtn');
+    var addWallBtn = document.getElementById('addWallBtn');
+    var addDoorBtn = document.getElementById('addDoorBtn');
+    var addTerraceBtn = document.getElementById('addTerraceBtn');
     var formatSelect = document.getElementById('formatSelect');
     var resetBtn = document.getElementById('resetBtn');
     var hint = document.getElementById('tbHint');
@@ -872,7 +887,7 @@
     var saveTimer = null;
     var customCounter = 0;
 
-    function emptyState(){ return {lines:{},texts:{},groups:{},doors:{},walls:{},deletedTexts:[],customTexts:[],windows:{},deletedWindows:[],customWindows:[]}; }
+    function emptyState(){ return {lines:{},texts:{},groups:{},doors:{},walls:{},deletedTexts:[],customTexts:[],windows:{},deletedWindows:[],customWindows:[],deletedSegs:[],customSegs:[],customDoors:[],customTerraces:[]}; }
 
     function svgPoint(evt){
       var pt = svg.createSVGPoint();
@@ -1073,6 +1088,265 @@
       });
     });
 
+    // ================= WALL SEGMENTS: every wall side is its own selectable, =================
+    // ================= deletable, draggable piece — plus tools to draw new walls and doors =================
+    var wallsGroup = wallRects[0] ? wallRects[0].parentNode : null;
+    var wallSegLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+    wallSegLayer.setAttribute('id','wallSegLayer');
+    wallSegLayer.setAttribute('fill','none');
+    wallSegLayer.setAttribute('stroke','var(--wall)');
+    wallSegLayer.setAttribute('stroke-width','9');
+    wallSegLayer.setAttribute('stroke-linecap','square');
+    if(wallsGroup && wallsGroup.parentNode) wallsGroup.parentNode.insertBefore(wallSegLayer, wallsGroup.nextSibling);
+    else svg.appendChild(wallSegLayer);
+
+    var wallSegs = []; // {id, el, hit, h1, h2, parentEl, parentSide}
+    var terraces = [];
+    var wallSegCounter = 0;
+    var selectedSeg = null;
+
+    function makeWallSeg(x1,y1,x2,y2, ownerEl, ownerSide){
+      var line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('class','wall-seg');
+      var id = 'wseg-' + (wallSegCounter++);
+      line.dataset.id = id;
+      line.setAttribute('x1',x1); line.setAttribute('y1',y1); line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+      wallSegLayer.appendChild(line);
+      var rec = {id:id, el:line, ownerEl:ownerEl, ownerSide:ownerSide, custom: !ownerEl};
+      wallSegs.push(rec);
+      registerWallSeg(rec);
+      return rec;
+    }
+
+    function selectSeg(rec){
+      if(selectedSeg) selectedSeg.el.classList.remove('seg-selected');
+      selectedSeg = rec;
+      if(rec) rec.el.classList.add('seg-selected');
+    }
+    function removeWallSeg(rec){
+      if(selectedSeg === rec) selectedSeg = null;
+      var hs = segHandles[rec.id];
+      if(hs){ hs.h1.remove(); hs.h2.remove(); hs.hit.remove(); delete segHandles[rec.id]; }
+      rec.el.remove();
+      wallSegs = wallSegs.filter(function(s){ return s !== rec; });
+      if(!rec.custom){
+        state.deletedSegs = state.deletedSegs || [];
+        if(state.deletedSegs.indexOf(rec.id) === -1) state.deletedSegs.push(rec.id);
+      }
+    }
+
+    var segHandles = {}; // id -> {h1,h2,hit}
+    function registerWallSeg(rec){
+      var el = rec.el;
+      var h1 = makeHandle(el.x1.baseVal.value, el.y1.baseVal.value);
+      var h2 = makeHandle(el.x2.baseVal.value, el.y2.baseVal.value);
+      addTip(h1, 'Drag to move this end of the wall');
+      addTip(h2, 'Drag to move this end of the wall');
+      h1.addEventListener('pointerdown', function(e){ selectSeg(rec); startDrag(e, {type:'seg-end', seg:el, end:1, handle:h1}); });
+      h2.addEventListener('pointerdown', function(e){ selectSeg(rec); startDrag(e, {type:'seg-end', seg:el, end:2, handle:h2}); });
+
+      var hit = document.createElementNS('http://www.w3.org/2000/svg','line');
+      hit.setAttribute('x1', el.x1.baseVal.value); hit.setAttribute('y1', el.y1.baseVal.value);
+      hit.setAttribute('x2', el.x2.baseVal.value); hit.setAttribute('y2', el.y2.baseVal.value);
+      hit.setAttribute('stroke','transparent');
+      hit.setAttribute('stroke-width','20');
+      hit.classList.add('seg-hit');
+      handlesLayer.appendChild(hit);
+      addTip(hit, 'Click to select this wall · drag to move it whole · Delete removes it');
+      hit.addEventListener('pointerdown', function(e){
+        selectSeg(rec);
+        startDrag(e, {type:'seg-whole', seg:el, h1:h1, h2:h2});
+      });
+      segHandles[rec.id] = {h1:h1, h2:h2, hit:hit};
+    }
+
+    // decompose every wall-rect into 4 independent sides
+    wallRects.forEach(function(el){
+      var x=el.x.baseVal.value, y=el.y.baseVal.value, w=el.width.baseVal.value, h=el.height.baseVal.value;
+      makeWallSeg(x,y,x+w,y, el, 'top');
+      makeWallSeg(x+w,y,x+w,y+h, el, 'right');
+      makeWallSeg(x+w,y+h,x,y+h, el, 'bottom');
+      makeWallSeg(x,y+h,x,y, el, 'left');
+      el.setAttribute('stroke','none');
+    });
+    // decompose every wall-path into its edges
+    wallPaths.forEach(function(el){
+      var pts = wallPathPoints[el.dataset.id];
+      for(var i=0;i<pts.length;i++){
+        var a = pts[i], b = pts[(i+1)%pts.length];
+        makeWallSeg(a.x,a.y,b.x,b.y, el, i);
+      }
+      el.setAttribute('stroke','none');
+    });
+    // drop any segments the viewer deleted on a previous visit
+    (state.deletedSegs||[]).forEach(function(id){
+      var rec = wallSegs.find(function(s){ return s.id === id; });
+      if(rec) removeWallSeg(rec);
+    });
+    // rebuild any brand-new walls the viewer drew on a previous visit
+    (state.customSegs||[]).forEach(function(c){
+      var rec = makeWallSeg(c.x1,c.y1,c.x2,c.y2, null, null);
+      rec.id = c.id; rec.el.dataset.id = c.id;
+    });
+    // rebuild any terrace floor fills (their 4 walls already came back via customSegs above)
+    (state.customTerraces||[]).forEach(function(t){
+      var rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x',t.x); rect.setAttribute('y',t.y); rect.setAttribute('width',t.w); rect.setAttribute('height',t.h);
+      rect.setAttribute('fill','var(--fill-terrace)');
+      rect.dataset.id = t.id;
+      wallsGroup.appendChild(rect);
+      terraces.push({id:t.id, el:rect});
+    });
+
+    // keep a wall-rect's 4 child segments glued to it whenever it's resized
+    function syncRectSegs(el){
+      var x=el.x.baseVal.value, y=el.y.baseVal.value, w=el.width.baseVal.value, h=el.height.baseVal.value;
+      var sides = {top:[x,y,x+w,y], right:[x+w,y,x+w,y+h], bottom:[x+w,y+h,x,y+h], left:[x,y+h,x,y]};
+      wallSegs.filter(function(s){ return s.ownerEl === el; }).forEach(function(s){
+        var c = sides[s.ownerSide];
+        if(!c) return;
+        s.el.setAttribute('x1',c[0]); s.el.setAttribute('y1',c[1]); s.el.setAttribute('x2',c[2]); s.el.setAttribute('y2',c[3]);
+        var hs = segHandles[s.id];
+        if(hs){
+          hs.h1.setAttribute('cx',c[0]); hs.h1.setAttribute('cy',c[1]);
+          hs.h2.setAttribute('cx',c[2]); hs.h2.setAttribute('cy',c[3]);
+          hs.hit.setAttribute('x1',c[0]); hs.hit.setAttribute('y1',c[1]); hs.hit.setAttribute('x2',c[2]); hs.hit.setAttribute('y2',c[3]);
+        }
+      });
+    }
+    // keep a wall-path's edge segments glued to its vertices whenever one is dragged
+    function syncPathSegs(el){
+      var pts = wallPathPoints[el.dataset.id];
+      wallSegs.filter(function(s){ return s.ownerEl === el; }).forEach(function(s){
+        var i = s.ownerSide, a = pts[i], b = pts[(i+1)%pts.length];
+        if(!a || !b) return;
+        s.el.setAttribute('x1',a.x); s.el.setAttribute('y1',a.y); s.el.setAttribute('x2',b.x); s.el.setAttribute('y2',b.y);
+        var hs = segHandles[s.id];
+        if(hs){
+          hs.h1.setAttribute('cx',a.x); hs.h1.setAttribute('cy',a.y);
+          hs.h2.setAttribute('cx',b.x); hs.h2.setAttribute('cy',b.y);
+          hs.hit.setAttribute('x1',a.x); hs.hit.setAttribute('y1',a.y); hs.hit.setAttribute('x2',b.x); hs.hit.setAttribute('y2',b.y);
+        }
+      });
+    }
+
+    document.addEventListener('keydown', function(e){
+      if(!editing) return;
+      if(document.activeElement === textEditor) return;
+      if((e.key === 'Delete' || e.key === 'Backspace') && selectedSeg){
+        e.preventDefault();
+        removeWallSeg(selectedSeg);
+        persistAll();
+      }
+    });
+
+    // ---------- "+ Add wall": click a start point, then an end point ----------
+    var wallDrawing = false, wallStart = null, wallPreview = null;
+    function startWallDrawMode(){
+      wallDrawing = true;
+      addWallBtn.classList.add('active');
+      hint.textContent = 'Click a start point for the new wall, then click again to finish it. Esc to cancel.';
+    }
+    function stopWallDrawMode(){
+      wallDrawing = false; wallStart = null;
+      if(wallPreview){ wallPreview.remove(); wallPreview = null; }
+      addWallBtn.classList.remove('active');
+    }
+    svg.addEventListener('pointerdown', function(e){
+      if(!wallDrawing) return;
+      var p = svgPoint(e);
+      if(!wallStart){
+        wallStart = p;
+        wallPreview = document.createElementNS('http://www.w3.org/2000/svg','line');
+        wallPreview.setAttribute('x1',p.x); wallPreview.setAttribute('y1',p.y);
+        wallPreview.setAttribute('x2',p.x); wallPreview.setAttribute('y2',p.y);
+        wallPreview.setAttribute('stroke','var(--blue)'); wallPreview.setAttribute('stroke-width','9'); wallPreview.setAttribute('stroke-dasharray','6 5');
+        handlesLayer.appendChild(wallPreview);
+      } else {
+        var rec = makeWallSeg(wallStart.x, wallStart.y, p.x, p.y, null, null);
+        selectSeg(rec);
+        stopWallDrawMode();
+        persistAll();
+      }
+    });
+    svg.addEventListener('pointermove', function(e){
+      if(!wallDrawing || !wallStart || !wallPreview) return;
+      var p = svgPoint(e);
+      wallPreview.setAttribute('x2',p.x); wallPreview.setAttribute('y2',p.y);
+    });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && wallDrawing) stopWallDrawMode(); });
+
+    // ---------- "+ Add terrace": a new outdoor zone — click one corner, then the opposite corner ----------
+    function makeTerrace(x,y,w,h,id){
+      var rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x',x); rect.setAttribute('y',y); rect.setAttribute('width',w); rect.setAttribute('height',h);
+      rect.setAttribute('fill','var(--fill-terrace)');
+      rect.dataset.id = id || ('terrace-' + Date.now() + '-' + (customCounter++));
+      wallsGroup.appendChild(rect); // early in the DOM so it renders under everything else
+      makeWallSeg(x,y,x+w,y,null,null);
+      makeWallSeg(x+w,y,x+w,y+h,null,null);
+      makeWallSeg(x+w,y+h,x,y+h,null,null);
+      makeWallSeg(x,y+h,x,y,null,null);
+      terraces.push({id: rect.dataset.id, el: rect});
+      return rect;
+    }
+    function addTerraceLabel(x,y,text){
+      var label = document.createElementNS('http://www.w3.org/2000/svg','text');
+      label.setAttribute('class','dim-text');
+      label.setAttribute('x', x); label.setAttribute('y', y);
+      label.setAttribute('font-size', 16); label.setAttribute('font-weight', '600');
+      label.setAttribute('text-anchor','middle'); label.setAttribute('fill','var(--ink)'); label.setAttribute('opacity','.8');
+      label.dataset.custom = '1';
+      label.dataset.id = 'terracelabel-' + Date.now() + '-' + (customCounter++);
+      label.textContent = text;
+      document.getElementById('labelsLayer').appendChild(label);
+      texts.push(label);
+      registerText(label);
+    }
+
+    var terraceDrawing = false, terraceStart = null, terracePreview = null;
+    function startTerraceDrawMode(){
+      terraceDrawing = true;
+      addTerraceBtn.classList.add('active');
+      hint.textContent = 'Click one corner of the new terrace, then click the opposite corner. Esc to cancel.';
+    }
+    function stopTerraceDrawMode(){
+      terraceDrawing = false; terraceStart = null;
+      if(terracePreview){ terracePreview.remove(); terracePreview = null; }
+      addTerraceBtn.classList.remove('active');
+    }
+    svg.addEventListener('pointerdown', function(e){
+      if(!terraceDrawing) return;
+      var p = svgPoint(e);
+      if(!terraceStart){
+        terraceStart = p;
+        terracePreview = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        terracePreview.setAttribute('x',p.x); terracePreview.setAttribute('y',p.y);
+        terracePreview.setAttribute('width',0); terracePreview.setAttribute('height',0);
+        terracePreview.setAttribute('fill','var(--blue)'); terracePreview.setAttribute('opacity','.2');
+        terracePreview.setAttribute('stroke','var(--blue)'); terracePreview.setAttribute('stroke-width','2'); terracePreview.setAttribute('stroke-dasharray','6 5');
+        handlesLayer.appendChild(terracePreview);
+      } else {
+        var x = Math.min(terraceStart.x, p.x), y = Math.min(terraceStart.y, p.y);
+        var w = Math.abs(p.x - terraceStart.x), h = Math.abs(p.y - terraceStart.y);
+        if(w > 20 && h > 20){
+          var rect = makeTerrace(x,y,w,h);
+          addTerraceLabel(x+w/2, y+h/2, 'Terrace');
+        }
+        stopTerraceDrawMode();
+        persistAll();
+      }
+    });
+    svg.addEventListener('pointermove', function(e){
+      if(!terraceDrawing || !terraceStart || !terracePreview) return;
+      var p = svgPoint(e);
+      var x = Math.min(terraceStart.x, p.x), y = Math.min(terraceStart.y, p.y);
+      var w = Math.abs(p.x - terraceStart.x), h = Math.abs(p.y - terraceStart.y);
+      terracePreview.setAttribute('x',x); terracePreview.setAttribute('y',y);
+      terracePreview.setAttribute('width',w); terracePreview.setAttribute('height',h);
+    });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && terraceDrawing) stopTerraceDrawMode(); });
+
     // ---------- text: drag, font-size wheel, double-click to edit, select+Delete to remove ----------
     var selectedText = null;
     function selectText(el){
@@ -1108,7 +1382,8 @@
       if(el) el.classList.add('window-selected');
     }
     function registerWindow(el){
-      addTip(el, 'Drag to reposition this window · click then Delete to remove it');
+      var isDoor = (el.dataset.id||'').indexOf('customdoor') === 0;
+      addTip(el, isDoor ? 'Drag to reposition this door · click then Delete to remove it' : 'Drag to reposition this window · click then Delete to remove it');
       el.addEventListener('pointerdown', function(e){ selectWindow(el); startDrag(e, {type:'group', group:el}); });
     }
     windows.forEach(registerWindow);
@@ -1216,6 +1491,35 @@
       persistAll();
     });
 
+    addWallBtn.addEventListener('click', function(){
+      if(wallDrawing){ stopWallDrawMode(); return; }
+      stopTerraceDrawMode();
+      startWallDrawMode();
+    });
+
+    addTerraceBtn.addEventListener('click', function(){
+      if(terraceDrawing){ stopTerraceDrawMode(); return; }
+      stopWallDrawMode();
+      startTerraceDrawMode();
+    });
+
+    addDoorBtn.addEventListener('click', function(){
+      customCounter++;
+      var el = document.createElementNS('http://www.w3.org/2000/svg','g');
+      el.setAttribute('class','window-obj');
+      el.dataset.id = 'customdoor-' + Date.now() + '-' + customCounter;
+      el.dataset.custom = '1';
+      el.setAttribute('transform','translate(300,900)');
+      el.innerHTML =
+        '<line class="win-erase" x1="0" y1="0" x2="80" y2="0" stroke="var(--card)" stroke-width="12"/>' +
+        '<path d="M0,0 L0,-70 A70,70 0 0 1 70,0" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" opacity=".7"/>';
+      document.getElementById('windowsLayer').appendChild(el);
+      windows.push(el);
+      registerWindow(el);
+      selectWindow(el);
+      persistAll();
+    });
+
     // ---------- drag engine ----------
     var active = null;
     function startDrag(e, info){
@@ -1246,6 +1550,12 @@
       } else if(info.type === 'wall-vertex'){
         var pt = wallPathPoints[info.path.dataset.id][info.index];
         info.origX = pt.x; info.origY = pt.y;
+      } else if(info.type === 'seg-end'){
+        info.origX = info.end===1 ? info.seg.x1.baseVal.value : info.seg.x2.baseVal.value;
+        info.origY = info.end===1 ? info.seg.y1.baseVal.value : info.seg.y2.baseVal.value;
+      } else if(info.type === 'seg-whole'){
+        info.origX1 = info.seg.x1.baseVal.value; info.origY1 = info.seg.y1.baseVal.value;
+        info.origX2 = info.seg.x2.baseVal.value; info.origY2 = info.seg.y2.baseVal.value;
       }
       active = info;
     }
@@ -1278,6 +1588,7 @@
         else if(active.edge === 'bottom'){ nh = Math.max(minSize, active.origH + dy); w.height.baseVal.value = nh; }
         else if(active.edge === 'top'){ nh = Math.max(minSize, active.origH - dy); w.y.baseVal.value = active.origY + active.origH - nh; w.height.baseVal.value = nh; }
         syncWallHandles(w);
+        syncRectSegs(w);
       } else if(active.type === 'wall-vertex'){
         var pid = active.path.dataset.id;
         var nvx = active.origX + dx, nvy = active.origY + dy;
@@ -1285,6 +1596,18 @@
         active.path.setAttribute('d', buildPathD(wallPathPoints[pid]));
         var h = wallPathHandles[pid][active.index];
         h.setAttribute('cx', nvx); h.setAttribute('cy', nvy);
+        syncPathSegs(active.path);
+      } else if(active.type === 'seg-end'){
+        var snx = active.origX + dx, sny = active.origY + dy;
+        if(active.end === 1){ active.seg.x1.baseVal.value = snx; active.seg.y1.baseVal.value = sny; }
+        else { active.seg.x2.baseVal.value = snx; active.seg.y2.baseVal.value = sny; }
+        active.handle.setAttribute('cx', snx); active.handle.setAttribute('cy', sny);
+      } else if(active.type === 'seg-whole'){
+        var snx1 = active.origX1+dx, sny1 = active.origY1+dy, snx2 = active.origX2+dx, sny2 = active.origY2+dy;
+        active.seg.x1.baseVal.value = snx1; active.seg.y1.baseVal.value = sny1;
+        active.seg.x2.baseVal.value = snx2; active.seg.y2.baseVal.value = sny2;
+        active.h1.setAttribute('cx', snx1); active.h1.setAttribute('cy', sny1);
+        active.h2.setAttribute('cx', snx2); active.h2.setAttribute('cy', sny2);
       }
     });
     document.addEventListener('pointerup', function(){
@@ -1297,6 +1620,13 @@
       var s = emptyState();
       s.deletedTexts = (state.deletedTexts || []).slice();
       s.deletedWindows = (state.deletedWindows || []).slice();
+      s.deletedSegs = (state.deletedSegs || []).slice();
+      wallSegs.filter(function(w){ return w.custom; }).forEach(function(w){
+        s.customSegs.push({id:w.id, x1:w.el.x1.baseVal.value, y1:w.el.y1.baseVal.value, x2:w.el.x2.baseVal.value, y2:w.el.y2.baseVal.value});
+      });
+      terraces.forEach(function(t){
+        s.customTerraces.push({id:t.id, x:t.el.x.baseVal.value, y:t.el.y.baseVal.value, w:t.el.width.baseVal.value, h:t.el.height.baseVal.value});
+      });
       lines.forEach(function(el){
         s.lines[el.dataset.id] = {x1:el.x1.baseVal.value,y1:el.y1.baseVal.value,x2:el.x2.baseVal.value,y2:el.y2.baseVal.value};
       });
@@ -1403,10 +1733,13 @@
       editBtn.textContent = on ? '✓ Editing — drag anything' : '✏️ Edit layout';
       addLabelBtn.style.display = on ? 'inline-flex' : 'none';
       addWindowBtn.style.display = on ? 'inline-flex' : 'none';
+      addWallBtn.style.display = on ? 'inline-flex' : 'none';
+      addDoorBtn.style.display = on ? 'inline-flex' : 'none';
+      addTerraceBtn.style.display = on ? 'inline-flex' : 'none';
       hint.textContent = on
-        ? 'Drag anything, or grab a blue dot to resize a room. Scroll on a label to resize its text, double-click to rename it, select + Delete to remove it.'
+        ? 'Click any wall to select it, then Delete to remove it, or drag it to move/resize it. Drag anything else the same way. Scroll on a label to resize its text, double-click to rename it, select + Delete to remove it.'
         : 'Click any door to open/close it — always on.';
-      if(!on){ selectText(null); selectWindow(null); closeTextEditor(false); }
+      if(!on){ selectText(null); selectWindow(null); selectSeg(null); closeTextEditor(false); stopWallDrawMode(); stopTerraceDrawMode(); }
     }
     editBtn.addEventListener('click', function(){ setEditing(!editing); });
 
@@ -1422,7 +1755,7 @@
     // anywhere else (e.g. the GitHub Pages copy of this same file).
     var CSS_VARS = ['--paper','--paper-2','--ink','--ink-soft','--line','--green','--pink','--blue',
       '--gold','--red','--gray','--orange','--card','--row-alt','--fill-bed','--fill-bath',
-      '--fill-kitchen','--fill-living','--fill-circ','--fill-foyer','--fill-stair','--wall'];
+      '--fill-kitchen','--fill-living','--fill-circ','--fill-foyer','--fill-stair','--fill-terrace','--wall'];
 
     function renderToCanvas(cb){
       var clone = svg.cloneNode(true);
@@ -1545,7 +1878,7 @@
   </div>
 
   <p class="note">
-    <b>Reading note —</b> the small colored square in each room's corner is the marker color from the original sketch — it's not a room-type code (green marks four separate bedrooms), only a tag to keep that source detail on the page; the table below lists it separately from what the room actually is. Walls are drawn as one continuous unbroken line with real door openings cut into them (swing arcs where the sketch showed one, plain gaps at the kitchen's open pass-through and the lift's sliding door) and window breaks on the exterior walls. Dimensions are copied as written (apostrophe used as decimal point, e.g. "3'4m" → 3.4m). Four shapes are genuinely irregular, not boxes: Room A's soffit-cut corner, the stepped entry foyer, the offset stairwell shaft, and the L-shaped Salón with its sofa alcove.
+    <b>Reading note —</b> the small colored square in each room's corner is the marker color from the original sketch — it's not a room-type code (green marks four separate bedrooms), only a tag to keep that source detail on the page; the table below lists it separately from what the room actually is. Every wall runs straight, with 90° corners throughout the outer perimeter — no diagonals. Three shapes are stepped rather than plain boxes (all still straight-walled): the entry foyer, the offset stairwell shaft, and the L-shaped Salón with its sofa alcove. Doors are cut into the walls with real openings (swing arcs where the sketch showed one, plain gaps at the kitchen's open pass-through and the lift's sliding door), and windows break the exterior walls. Dimensions are copied as written (apostrophe used as decimal point, e.g. "3'4m" → 3.4m). In Edit layout mode every individual wall side is its own selectable piece — click one, then Delete to remove it, or drag it to move/resize it; "+ Add wall" draws a brand new one, "+ Add door" and "+ Add window" drop in new openings you drag onto any wall.
   </p>
 
   <h2>Room reference</h2>
@@ -1555,7 +1888,7 @@
         <tr><th>#</th><th>Color</th><th>Shape</th><th>Dimensions</th><th>Contents / function</th></tr>
       </thead>
       <tbody>
-        <tr><td class="num">1</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Rectangle, top-left corner cut by a diagonal soffit line<span class="shape-flag">irregular</span></td><td>3.4 × 3.0 m</td><td>3-leaf built-in wardrobe along top wall, door swing bottom-right → <b>Bedroom</b></td></tr>
+        <tr><td class="num">1</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Plain rectangle</td><td>3.4 × 3.0 m</td><td>3-leaf built-in wardrobe along top wall, door swing bottom-right → <b>Bedroom</b></td></tr>
         <tr><td class="num">2</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Plain rectangle</td><td>2.7 × 3.0 m</td><td>Empty → <b>Bedroom</b></td></tr>
         <tr><td class="num">3</td><td class="colorcell"><span class="dot" style="background:var(--pink)"></span>Pink</td><td>Plain rectangle</td><td>2.7 × 4.5 m</td><td>Tub/shower zone between two rails, double vanity at the bottom → <b>Bathroom</b> (large)</td></tr>
         <tr><td class="num">4</td><td class="colorcell"><span class="dot" style="background:var(--green)"></span>Green</td><td>Plain rectangle</td><td>3.1 × 3.2 m</td><td>Wardrobe + table/desk with leg brace → <b>Bedroom</b></td></tr>
