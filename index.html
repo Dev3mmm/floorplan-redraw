@@ -424,10 +424,12 @@
       </select>
       <button class="tbtn ghost" id="undoBtn" type="button" style="display:none;" title="Step back one change at a time">↶ Undo</button>
       <button class="tbtn ghost" id="redoBtn" type="button" style="display:none;" title="Step forward one change you undid">↷ Redo</button>
+      <button class="tbtn ghost" id="copyLayoutBtn" type="button" title="Copy your current layout as text so it can be made the new default">Copy layout</button>
       <button class="tbtn ghost" id="resetBtn" type="button" title="Discard all your edits and reload the original layout">Reset to default</button>
       <span class="tb-hint" id="tbHint">Click any door to open/close it — always on.</span>
       <span class="tb-status"><span class="tb-dot" id="saveDot"></span><span id="saveLabel"></span></span>
     </div>
+    <textarea id="layoutBox" readonly style="display:none;width:100%;height:110px;margin-bottom:12px;font:11px 'IBM Plex Mono',monospace;padding:8px;border-radius:8px;border:1px solid var(--ink-soft);background:var(--card);color:var(--ink);" aria-label="Your layout data"></textarea>
     <input id="textEditor" autocomplete="off" spellcheck="false"/>
     <svg id="floorplanSvg" viewBox="0 0 1500 2010" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -1980,6 +1982,23 @@
       location.reload();
     });
 
+    document.getElementById('copyLayoutBtn').addEventListener('click', function(){
+      var btn = this, box = document.getElementById('layoutBox');
+      var text = '';
+      try{ text = localStorage.getItem(STORAGE_KEY) || JSON.stringify(state); }catch(e){ text = JSON.stringify(state); }
+      function showBox(){
+        box.value = text; box.style.display = 'block'; box.focus(); box.select();
+        btn.textContent = 'Select all + copy below';
+      }
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){
+          box.style.display = 'none';
+          btn.textContent = '✓ Copied';
+          setTimeout(function(){ btn.textContent = 'Copy layout'; }, 2200);
+        }, showBox);
+      } else { showBox(); }
+    });
+
     undoBtn.addEventListener('click', function(){
       if(!undoStack.length) return;
       try{
@@ -2017,6 +2036,7 @@
       var clone = svg.cloneNode(true);
       var hl = clone.querySelector('#handlesLayer');
       if(hl) hl.remove();
+      clone.querySelectorAll('.win-stretch-handle,.win-rotate-handle').forEach(function(h){ h.remove(); });
       clone.removeAttribute('id');
 
       // the cloned SVG is serialized standalone, so var(--x) references need their values
